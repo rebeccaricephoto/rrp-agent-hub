@@ -421,11 +421,11 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
           </div>
           <div class="phase-right">
             <div class="phase-badge pb-idle" id="p1Badge">Idle</div>
-            <span class="phase-chevron" id="p1Chev">&#9660;</span>
+            <span class="phase-chevron up" id="p1Chev">&#9660;</span>
           </div>
         </div>
         <div class="phase-prog-track"><div class="phase-prog-fill" id="p1ProgFill"></div></div>
-        <div class="phase-body" id="p1Body">
+        <div class="phase-body collapsed" id="p1Body">
           <div class="phase-agents" id="p1AgentList"></div>
         </div>
       </div>
@@ -806,9 +806,7 @@ function startPoller(){
     if(s.phase2){
       if(s.phase2.running && s.phase2.currentAgent){
         if(!p2Active){
-          // Auto-expand phase 2 when it starts
-          document.getElementById('p2Body').classList.remove('collapsed');
-          document.getElementById('p2Chev').classList.remove('up');
+          // Phase 2 started — leave collapsed, user can click to expand
         }
         p2Active=true; p2AgentIdx=s.phase2.currentAgent;
         p2PostTitle=s.phase2.postTitle||p2PostTitle;
@@ -873,11 +871,7 @@ async function runPipeline(){
   // Reset phase UI
   setPhase(1,'idle'); setPhase(2,'idle');
   initAgentLists();
-  // Expand phase 1, collapse phase 2
-  document.getElementById('p1Body').classList.remove('collapsed');
-  document.getElementById('p1Chev').classList.remove('up');
-  document.getElementById('p2Body').classList.add('collapsed');
-  document.getElementById('p2Chev').classList.add('up');
+  // Leave both phases collapsed — user can expand by clicking
 
   running=true; p1Active=false; p2Active=false; serverConnected=false;
   p1AgentIdx=0; p2AgentIdx=0;
@@ -993,8 +987,6 @@ async function bootStatusCheck(){
       if(s.phase1.currentAgent)setPhaseAgent(1,s.phase1.currentAgent);
     }
     if(s.phase2?.running){
-      document.getElementById('p2Body').classList.remove('collapsed');
-      document.getElementById('p2Chev').classList.remove('up');
       setPhase(2,'running',s.phase2.postTitle||'');
       if(s.phase2.currentAgent)setPhaseAgent(2,s.phase2.currentAgent);
     }
