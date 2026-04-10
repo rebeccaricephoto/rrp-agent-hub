@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRP Agent Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Work+Sans:wght@300;400;500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --iron:       #3B403D;
+  --red:        #9B3738;
+  --pink:       #E5C6C6;
+  --dusty:      #C7B8B5;
+  --bg:         #FBFBFA;
+  --surface:    #FFFFFF;
+  --border:     #E0DCDA;
+  --pink-light: rgba(229,198,198,0.12);
+  --pink-mid:   rgba(229,198,198,0.3);
+  --green:      #5a8a5a;
+  --green-bg:   rgba(90,138,90,.07);
+  --green-bdr:  rgba(90,138,90,.3);
+  --amber:      #C4893A;
+  --amber-bg:   rgba(196,137,58,.08);
+  --amber-bdr:  rgba(196,137,58,.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);line-height:1.85;min-height:100vh;}
+
+/* LOGIN */
+.login-screen{position:fixed;inset:0;z-index:9000;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .38s,transform .38s;}
+.login-screen.fade-out{opacity:0;transform:translateY(-12px);}
+.login-screen.gone{display:none;}
+.login-box{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:52px 48px;width:100%;max-width:400px;text-align:center;}
+.login-mono{width:52px;height:52px;border-radius:50%;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;color:var(--iron);margin:0 auto 20px;}
+.login-title{font-family:'Playfair Display',serif;font-size:22px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);margin-bottom:6px;}
+.login-sub{font-size:12px;color:var(--iron);opacity:.45;margin-bottom:32px;}
+.login-input{width:100%;border:.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:14px;color:var(--iron);padding:12px 16px;margin-bottom:8px;border-radius:0;outline:none;}
+.login-input:focus{border-color:var(--pink);}
+.login-err{font-size:12px;color:var(--red);min-height:18px;margin-bottom:14px;}
+
+/* NAV */
+.topnav{background:var(--surface);border-bottom:.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:64px;position:sticky;top:0;z-index:100;}
+.topnav-brand{display:flex;align-items:center;gap:14px;}
+.topnav-mono{width:36px;height:36px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:14px;color:var(--iron);}
+.topnav-title{font-family:'Work Sans',sans-serif;font-weight:400;font-size:12px;text-transform:uppercase;letter-spacing:3px;color:var(--iron);}
+.topnav-right{display:flex;align-items:center;gap:20px;}
+.user-pill{display:none;align-items:center;gap:8px;background:var(--bg);border:.5px solid var(--border);border-radius:50px;padding:5px 14px;}
+.user-pill span{font-size:11px;color:var(--iron);opacity:.55;}
+.logout-btn{display:none;background:none;border:none;cursor:pointer;font-family:'Poppins',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);opacity:.35;transition:opacity .2s;}
+.logout-btn:hover{opacity:.7;}
+.status-wrap{display:flex;align-items:center;gap:8px;font-family:'Poppins',sans-serif;font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);opacity:.5;}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--border);transition:background .3s;}
+.sdot.running{background:var(--pink);animation:pulse 1.4s infinite;}
+.sdot.done{background:var(--green);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.45;transform:scale(.8);}}
+
+/* FIREBASE BANNER */
+.fb-banner{background:var(--amber-bg);border-bottom:.5px solid var(--amber-bdr);padding:10px 48px;display:none;align-items:center;gap:10px;font-size:12px;color:var(--iron);}
+.fb-banner-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);flex-shrink:0;}
+
+/* PAGE */
+.page{max-width:1160px;margin:0 auto;padding:56px 48px 80px;}
+.page-header{margin-bottom:52px;}
+.eyebrow{font-family:'Work Sans',sans-serif;font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--pink);margin-bottom:12px;}
+.page-title{font-family:'Playfair Display',serif;font-size:48px;text-transform:uppercase;color:var(--iron);letter-spacing:1px;line-height:1.05;margin-bottom:14px;}
+.page-sub{font-size:13px;color:var(--iron);opacity:.45;}
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:52px;}
+.stat-card{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:28px 30px;}
+.stat-label{font-family:'Poppins',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);margin-bottom:10px;}
+.stat-value{font-family:'Playfair Display',serif;font-size:32px;color:var(--iron);line-height:1;}
+.stat-detail{font-size:12px;color:var(--iron);opacity:.4;margin-top:6px;}
+.sec-label{display:flex;align-items:center;gap:20px;margin-bottom:24px;}
+.sec-label span{font-family:'Work Sans',sans-serif;font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--pink);white-space:nowrap;}
+.sec-label::after{content:'';flex:1;height:.5px;background:var(--border);}
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;}
+
+/* TEAM CARD */
+.team-card{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:36px 40px;cursor:pointer;transition:border-color .2s;position:relative;overflow:hidden;}
+.team-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--pink);opacity:0;transition:opacity .2s;}
+.team-card:hover{border-color:var(--pink);}
+.team-card:hover::before{opacity:1;}
+.team-card.soon{cursor:default;opacity:.5;}
+.team-card.soon:hover{border-color:var(--border);}
+.team-card.soon:hover::before{opacity:0;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;}
+.cbadge{font-family:'Poppins',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:5px 12px;}
+.b-idle{background:var(--bg);color:var(--iron);opacity:.45;border:.5px solid var(--border);}
+.b-running{background:var(--pink-mid);color:var(--iron);border:.5px solid var(--pink);opacity:1;}
+.b-soon{background:var(--bg);color:var(--iron);opacity:.45;border:.5px solid var(--border);}
+.b-done{background:var(--green-bg);color:var(--green);border:.5px solid var(--green-bdr);opacity:1;}
+.card-ey{font-family:'Poppins',sans-serif;font-weight:600;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);opacity:.45;margin-bottom:8px;}
+.card-name{font-family:'Playfair Display',serif;font-size:22px;text-transform:uppercase;color:var(--iron);letter-spacing:1px;line-height:1.15;margin-bottom:12px;}
+.card-desc{font-size:13px;color:var(--iron);opacity:.65;line-height:1.75;margin-bottom:28px;}
+.card-meta{display:flex;gap:24px;padding-top:20px;border-top:.5px solid var(--border);}
+.ml{font-family:'Poppins',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);opacity:.4;margin-bottom:3px;}
+.mv{font-size:13px;color:var(--iron);}
+
+/* OVERLAY + PANEL */
+.overlay{position:fixed;inset:0;background:rgba(59,64,61,.25);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.panel{position:fixed;top:0;right:0;bottom:0;width:720px;max-width:95vw;background:var(--bg);z-index:201;transform:translateX(100%);transition:transform .35s cubic-bezier(.16,1,.3,1);display:flex;flex-direction:column;overflow:hidden;}
+.panel.open{transform:translateX(0);}
+.panel-head{background:var(--surface);border-bottom:.5px solid var(--border);padding:28px 40px;flex-shrink:0;}
+.panel-head-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;}
+.panel-ey{font-family:'Poppins',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--pink);margin-bottom:6px;}
+.panel-title{font-family:'Playfair Display',serif;font-size:28px;text-transform:uppercase;color:var(--iron);letter-spacing:1px;}
+.close-btn{background:none;border:.5px solid var(--border);cursor:pointer;width:36px;height:36px;display:flex;align-items:center;justify-content:center;color:var(--iron);opacity:.4;font-size:18px;transition:opacity .2s,border-color .2s;border-radius:0;flex-shrink:0;}
+.close-btn:hover{opacity:1;border-color:var(--pink);}
+.tab-bar{display:flex;gap:0;}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'Poppins',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);opacity:.35;padding:10px 20px 10px 0;transition:opacity .2s,border-color .2s;}
+.tab-btn.active{opacity:1;border-bottom-color:var(--pink);}
+.tab-btn:hover:not(.active){opacity:.6;}
+.panel-body{flex:1;overflow-y:auto;padding:36px 40px;}
+.panel-body::-webkit-scrollbar{width:3px;}
+.panel-body::-webkit-scrollbar-thumb{background:var(--border);}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* INNER CARDS */
+.icard{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:28px 32px;margin-bottom:20px;}
+.stitle{font-family:'Poppins',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);margin-bottom:20px;}
+
+/* BUTTONS */
+.rrp-btn{display:inline-flex;align-items:center;gap:8px;background:var(--pink);color:#fff;font-family:'Poppins',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:2px;padding:13px 28px;border-radius:0;border:none;cursor:pointer;text-decoration:none;transition:background .2s;}
+.rrp-btn:hover{background:var(--red);}
+.rrp-btn:disabled{opacity:.35;cursor:not-allowed;}
+.rrp-btn.outline{background:transparent;color:var(--iron);border:.5px solid var(--border);}
+.rrp-btn.outline:hover{border-color:var(--pink);background:var(--pink-light);}
+.rrp-btn.stop-btn{background:var(--red);}
+.rrp-btn.stop-btn:hover{background:#7a2b2c;}
+.rrp-btn.sm{font-size:10px;padding:10px 18px;}
+.cnt-wrap{display:flex;align-items:center;border:.5px solid var(--border);}
+.cnt-wrap button{background:none;border:none;cursor:pointer;width:32px;height:42px;font-size:16px;color:var(--iron);opacity:.4;transition:opacity .2s;}
+.cnt-wrap button:hover{opacity:1;}
+.cnt-wrap input{width:40px;height:42px;border:none;border-left:.5px solid var(--border);border-right:.5px solid var(--border);text-align:center;font-family:'Poppins',sans-serif;font-size:13px;color:var(--iron);background:var(--surface);}
+.cnt-wrap input:focus{outline:none;}
+.cnt-unit{font-family:'Poppins',sans-serif;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);opacity:.4;}
+.run-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+
+/* COMPLETION BANNER */
+.comp-banner{background:var(--green-bg);border:.5px solid var(--green-bdr);border-radius:12px;padding:18px 24px;margin-bottom:20px;display:none;align-items:center;justify-content:space-between;gap:16px;}
+.comp-banner.vis{display:flex;}
+.comp-text{font-size:13px;color:var(--iron);}
+.comp-link{font-family:'Poppins',sans-serif;font-weight:700;font-size:11px;color:var(--green);text-decoration:none;border-bottom:.5px solid var(--green);padding-bottom:1px;white-space:nowrap;}
+
+/* OVERALL PROGRESS BAR */
+.overall-bar-wrap{margin-top:14px;display:none;}
+.overall-bar-track{height:2px;background:var(--bg);border:.5px solid var(--border);margin-bottom:8px;}
+.overall-bar-fill{height:100%;background:var(--pink);width:0%;transition:width .8s ease;}
+.overall-bar-fill.done{background:var(--green);}
+.elapsed-lbl{font-size:12px;color:var(--iron);opacity:.45;}
+
+/* PHASE SECTIONS */
+.phase-section{background:var(--surface);border:.5px solid var(--border);border-radius:12px;margin-bottom:16px;overflow:hidden;transition:border-color .3s;}
+.phase-section.phase-active{border-color:var(--pink);}
+.phase-section.phase-done{border-color:var(--green-bdr);}
+.phase-header{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 24px 16px;cursor:pointer;user-select:none;gap:12px;}
+.phase-meta{flex:1;}
+.phase-eyebrow{font-family:'Poppins',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--iron);opacity:.38;margin-bottom:3px;}
+.phase-name{font-family:'Playfair Display',serif;font-size:17px;color:var(--iron);letter-spacing:.3px;margin-bottom:4px;}
+.phase-working{font-size:11px;font-family:'Poppins',sans-serif;color:var(--pink);min-height:15px;font-style:italic;transition:opacity .3s;}
+.phase-working.hidden{opacity:0;}
+.phase-right{display:flex;align-items:center;gap:10px;flex-shrink:0;padding-top:2px;}
+.phase-badge{font-family:'Poppins',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;padding:4px 10px;border-radius:0;}
+.pb-idle{background:var(--bg);color:var(--iron);opacity:.4;border:.5px solid var(--border);}
+.pb-running{background:var(--pink-mid);color:var(--iron);border:.5px solid var(--pink);}
+.pb-done{background:var(--green-bg);color:var(--green);border:.5px solid var(--green-bdr);}
+@keyframes phase-pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+.pb-running{animation:phase-pulse 1.8s infinite;}
+.phase-chevron{color:var(--dusty);font-size:11px;transition:transform .25s;line-height:1;margin-top:2px;}
+.phase-chevron.up{transform:rotate(-90deg);}
+.phase-prog-track{height:2px;background:var(--bg);}
+.phase-prog-fill{height:100%;width:0%;background:var(--pink);transition:width .8s ease;}
+.phase-prog-fill.done{background:var(--green);}
+.phase-body{overflow:hidden;transition:max-height .3s ease;max-height:800px;}
+.phase-body.collapsed{max-height:0;}
+.phase-agents{padding:4px 24px 20px;}
+
+/* AGENT ROWS */
+.agent-row{display:flex;align-items:flex-start;gap:14px;padding:11px 0;border-bottom:.5px solid var(--border);transition:opacity .25s;}
+.agent-row:last-child{border-bottom:none;}
+.agent-num{font-family:'Playfair Display',serif;font-size:12px;color:var(--dusty);width:26px;flex-shrink:0;padding-top:2px;}
+.agent-info{flex:1;}
+.agent-name{font-size:13px;color:var(--iron);margin-bottom:1px;}
+.agent-desc{font-size:11px;color:var(--iron);opacity:.4;line-height:1.5;}
+.agent-model{font-size:10px;color:var(--dusty);font-family:'Poppins',sans-serif;letter-spacing:.3px;margin-top:2px;}
+.agent-status{font-family:'Poppins',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;flex-shrink:0;margin-top:2px;min-width:56px;text-align:right;}
+.as-idle{color:var(--iron);opacity:.25;}
+.as-running{color:var(--pink);animation:pulse 1.4s infinite;}
+.as-done{color:var(--green);}
+
+/* SCHEDULE */
+.day-cbs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+.day-cb{display:flex;align-items:center;gap:6px;cursor:pointer;}
+.day-cb input{width:14px;height:14px;accent-color:var(--pink);}
+.day-cb span{font-family:'Poppins',sans-serif;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);}
+.sf{margin-bottom:0;}
+.sf label{font-family:'Poppins',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);display:block;margin-bottom:8px;}
+.sf input,.sf select{border:.5px solid var(--border);border-radius:0;background:var(--bg);font-family:'Poppins',sans-serif;font-size:13px;color:var(--iron);padding:10px 14px;max-width:200px;outline:none;}
+.sf input:focus,.sf select:focus{border-color:var(--pink);}
+.sched-saved-wrap{background:var(--green-bg);border:.5px solid var(--green-bdr);border-radius:8px;padding:16px 20px;display:none;}
+.sched-saved-wrap.vis{display:block;}
+.sched-saved-text{font-size:13px;color:var(--iron);line-height:1.7;}
+.sched-edit-link{background:none;border:none;cursor:pointer;font-family:'Poppins',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);opacity:.38;margin-top:10px;display:block;padding:0;transition:opacity .2s;}
+.sched-edit-link:hover{opacity:.7;}
+
+/* RUN LOG */
+.run-entry{display:flex;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:.5px solid var(--border);}
+.run-entry:last-child{border-bottom:none;}
+.rdot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;margin-top:6px;}
+.rdot.ok{background:var(--green);}
+.rinfo{flex:1;}
+.rtitle{font-size:13px;color:var(--iron);margin-bottom:2px;line-height:1.5;}
+.rmeta{font-size:12px;color:var(--iron);opacity:.4;}
+.rlink{font-family:'Poppins',sans-serif;font-weight:700;font-size:11px;color:var(--pink);text-decoration:none;border-bottom:.5px solid var(--pink);padding-bottom:1px;white-space:nowrap;}
+.rlink:hover{color:var(--red);border-color:var(--red);}
+
+/* REQUEST */
+.flabel{font-family:'Poppins',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);display:block;margin-bottom:10px;}
+.finput{width:100%;border:.5px solid var(--border);border-radius:0;background:var(--bg);font-family:'Poppins',sans-serif;font-size:14px;color:var(--iron);padding:13px 16px;margin-bottom:16px;outline:none;}
+.finput:focus{border-color:var(--pink);}
+.bs-results{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:24px 28px;margin-top:20px;}
+.bs-item{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:.5px solid var(--border);}
+.bs-item:last-child{border-bottom:none;}
+.bs-topic{font-size:13px;color:var(--iron);flex:1;line-height:1.5;}
+.bs-acts{display:flex;gap:8px;flex-shrink:0;}
+
+/* CALENDAR */
+.cal-check-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:.5px solid var(--border);font-size:13px;color:var(--iron);line-height:1.55;}
+.cal-check-item:last-child{border-bottom:none;}
+.cdot{width:6px;height:6px;border-radius:50%;background:var(--pink);flex-shrink:0;margin-top:6px;}
+
+/* PROGRESS TAB */
+.big-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;}
+.bstat{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:28px 24px;text-align:center;}
+.bnum{font-family:'Playfair Display',serif;font-size:40px;color:var(--iron);line-height:1;margin-bottom:8px;}
+.blabel{font-family:'Poppins',sans-serif;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--iron);opacity:.38;}
+.ms-item{display:flex;align-items:flex-start;gap:20px;padding:16px 0;border-bottom:.5px solid var(--border);}
+.ms-item:last-child{border-bottom:none;}
+.ms-num{font-family:'Playfair Display',serif;font-size:28px;color:var(--border);line-height:1;width:52px;flex-shrink:0;transition:color .4s;}
+.ms-num.hit{color:var(--pink);}
+.ms-title{font-family:'Poppins',sans-serif;font-weight:700;font-size:13px;color:var(--iron);margin-bottom:2px;}
+.ms-sub{font-size:12px;color:var(--iron);opacity:.4;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--iron);color:#fff;font-family:'Poppins',sans-serif;font-size:13px;padding:12px 24px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:9999;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+@media(max-width:760px){
+  .topnav{padding:0 20px;}
+  .page{padding:32px 20px 60px;}
+  .stat-strip{grid-template-columns:1fr 1fr;}
+  .panel{width:100vw;max-width:100vw;}
+  .panel-body{padding:24px 20px;}
+  .panel-head{padding:20px;}
+  .big-stats{grid-template-columns:1fr 1fr;}
+  .fb-banner{padding:10px 20px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-mono">RR</div>
+    <div class="login-title">Agent Hub</div>
+    <div class="login-sub">Rebecca Rice Photography</div>
+    <input class="login-input" type="email" id="loginEmail" placeholder="Your email address" autocomplete="email">
+    <div class="login-err" id="loginErr"></div>
+    <button class="rrp-btn" style="width:100%;justify-content:center;" id="loginBtn">Enter Hub</button>
+  </div>
+</div>
+
+<!-- FIREBASE BANNER -->
+<div class="fb-banner" id="fbBanner">
+  <div class="fb-banner-dot"></div>
+  <span id="fbBannerText">Connecting to sync…</span>
+</div>
+
+<!-- NAV -->
+<nav class="topnav">
+  <div class="topnav-brand">
+    <div class="topnav-mono">RR</div>
+    <div class="topnav-title">Agent Hub</div>
+  </div>
+  <div class="topnav-right">
+    <div class="user-pill" id="userPill"><span id="userLbl"></span></div>
+    <button class="logout-btn" id="logoutBtn">Sign out</button>
+    <div class="status-wrap">
+      <div class="sdot" id="gDot"></div>
+      <span id="gStatus">All systems idle</span>
+    </div>
+  </div>
+</nav>
+
+<!-- PAGE -->
+<div class="page">
+  <div class="page-header">
+    <div class="eyebrow">Rebecca Rice Photography</div>
+    <div class="page-title">Agent Hub</div>
+    <div class="page-sub">Automation command center</div>
+  </div>
+
+  <div class="stat-strip">
+    <div class="stat-card">
+      <div class="stat-label">Active Teams</div>
+      <div class="stat-value">1</div>
+      <div class="stat-detail">1 more coming soon</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Posts This Week</div>
+      <div class="stat-value" id="sWeek">0</div>
+      <div class="stat-detail">via blog pipeline</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Agents</div>
+      <div class="stat-value">15</div>
+      <div class="stat-detail">across 2 phases</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Last Run</div>
+      <div class="stat-value" id="sLast" style="font-size:18px;padding-top:6px">—</div>
+      <div class="stat-detail" id="sLastSub">No runs yet</div>
+    </div>
+  </div>
+
+  <div class="sec-label"><span>Agent Teams</span></div>
+  <div class="team-grid">
+
+    <div class="team-card" onclick="openPanel()">
+      <div class="card-top">
+        <div>
+          <div class="card-ey">Blog Pipeline</div>
+          <div class="card-name">Blog Pipeline</div>
+        </div>
+        <div class="cbadge b-idle" id="cBadge">Idle</div>
+      </div>
+      <div class="card-desc">Researches, writes, and publishes SEO-optimized blog posts to rebeccaricephoto.com — complete with audio episode and email draft. 15 agents across 2 phases.</div>
+      <div class="card-meta">
+        <div><div class="ml">Agents</div><div class="mv">15</div></div>
+        <div><div class="ml">Phases</div><div class="mv">2</div></div>
+        <div><div class="ml">Schedule</div><div class="mv" id="cSched">Not set</div></div>
+        <div><div class="ml">Last run</div><div class="mv" id="cLast">—</div></div>
+      </div>
+    </div>
+
+    <div class="team-card soon">
+      <div class="card-top">
+        <div>
+          <div class="card-ey">Email Pipeline</div>
+          <div class="card-name">Kit Email Pipeline</div>
+        </div>
+        <div class="cbadge b-soon">Coming Soon</div>
+      </div>
+      <div class="card-desc">Automated email sequences, launch campaigns, and nurture flows built from your teaching frameworks and brand voice.</div>
+      <div class="card-meta"><div><div class="ml">Status</div><div class="mv">In planning</div></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+
+<!-- PANEL -->
+<div class="panel" id="panel">
+  <div class="panel-head">
+    <div class="panel-head-top">
+      <div>
+        <div class="panel-ey">Blog Pipeline &middot; 15 Agents &middot; 2 Phases</div>
+        <div class="panel-title">Blog Pipeline</div>
+      </div>
+      <button class="close-btn" onclick="closePanel()">&#x2715;</button>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="swTab(event,'run')">Run Pipeline</button>
+      <button class="tab-btn" onclick="swTab(event,'request')">Request Post</button>
+      <button class="tab-btn" onclick="swTab(event,'calendar')">Refresh Calendar</button>
+      <button class="tab-btn" onclick="swTab(event,'progress')">Progress</button>
+    </div>
+  </div>
+
+  <div class="panel-body">
+
+    <!-- RUN TAB -->
+    <div class="tab-pane active" id="t-run">
+
+      <div class="comp-banner" id="compBanner">
+        <div class="comp-text" id="compText">Post sent to WordPress drafts.</div>
+        <a class="comp-link" id="compLink" href="https://rebeccaricephoto.com/wp-admin/edit.php?post_status=draft&post_type=post" target="_blank" rel="noopener">View Drafts &rarr;</a>
+      </div>
+
+      <div class="icard">
+        <div class="stitle">Run Now</div>
+        <div class="run-row">
+          <button class="rrp-btn" id="btnRun" onclick="runPipeline()">Run Pipeline</button>
+          <div class="cnt-wrap">
+            <button onclick="adj(-1)">&#8722;</button>
+            <input type="number" id="pCount" value="1" min="1" max="5" readonly>
+            <button onclick="adj(1)">&#43;</button>
+          </div>
+          <span class="cnt-unit">posts</span>
+          <button class="rrp-btn stop-btn" id="btnStop" onclick="stopPipeline()" style="display:none">Stop</button>
+        </div>
+        <div class="overall-bar-wrap" id="overallBarWrap">
+          <div class="overall-bar-track"><div class="overall-bar-fill" id="overallFill"></div></div>
+          <span class="elapsed-lbl" id="elapsedLbl">0:00 elapsed</span>
+        </div>
+      </div>
+
+      <!-- PHASE 1 -->
+      <div class="phase-section" id="phase1Sec">
+        <div class="phase-header" onclick="togglePhase(1)">
+          <div class="phase-meta">
+            <div class="phase-eyebrow">Phase 1 &mdash; 10 Agents</div>
+            <div class="phase-name">Blog Draft</div>
+            <div class="phase-working hidden" id="p1Working"></div>
+          </div>
+          <div class="phase-right">
+            <div class="phase-badge pb-idle" id="p1Badge">Idle</div>
+            <span class="phase-chevron" id="p1Chev">&#9660;</span>
+          </div>
+        </div>
+        <div class="phase-prog-track"><div class="phase-prog-fill" id="p1ProgFill"></div></div>
+        <div class="phase-body" id="p1Body">
+          <div class="phase-agents" id="p1AgentList"></div>
+        </div>
+      </div>
+
+      <!-- PHASE 2 -->
+      <div class="phase-section" id="phase2Sec">
+        <div class="phase-header" onclick="togglePhase(2)">
+          <div class="phase-meta">
+            <div class="phase-eyebrow">Phase 2 &mdash; 6 Agents</div>
+            <div class="phase-name">Audio &amp; Email</div>
+            <div class="phase-working hidden" id="p2Working"></div>
+          </div>
+          <div class="phase-right">
+            <div class="phase-badge pb-idle" id="p2Badge">Idle</div>
+            <span class="phase-chevron up" id="p2Chev">&#9660;</span>
+          </div>
+        </div>
+        <div class="phase-prog-track"><div class="phase-prog-fill" id="p2ProgFill"></div></div>
+        <div class="phase-body collapsed" id="p2Body">
+          <div class="phase-agents" id="p2AgentList"></div>
+        </div>
+      </div>
+
+      <!-- SCHEDULE -->
+      <div class="icard">
+        <div class="stitle">Overnight Schedule</div>
+        <div id="schedEdit">
+          <div class="day-cbs">
+            <label class="day-cb"><input type="checkbox" id="d-mon"> <span>Mon</span></label>
+            <label class="day-cb"><input type="checkbox" id="d-tue"> <span>Tue</span></label>
+            <label class="day-cb"><input type="checkbox" id="d-wed" checked> <span>Wed</span></label>
+            <label class="day-cb"><input type="checkbox" id="d-thu"> <span>Thu</span></label>
+            <label class="day-cb"><input type="checkbox" id="d-fri" checked> <span>Fri</span></label>
+            <label class="day-cb"><input type="checkbox" id="d-sat"> <span>Sat</span></label>
+            <label class="day-cb"><input type="checkbox" id="d-sun"> <span>Sun</span></label>
+          </div>
+          <div style="display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;">
+            <div class="sf"><label>Run time</label><input type="time" id="sTime" value="23:00"></div>
+            <div class="sf"><label>Posts per run</label>
+              <select id="sCount">
+                <option value="1" selected>1 post</option>
+                <option value="2">2 posts</option>
+                <option value="3">3 posts</option>
+              </select>
+            </div>
+          </div>
+          <button class="rrp-btn sm" onclick="saveSched()">Save Schedule</button>
+        </div>
+        <div class="sched-saved-wrap" id="schedSaved">
+          <div class="sched-saved-text" id="schedSavedText"></div>
+          <button class="sched-edit-link" onclick="editSched()">Edit Schedule</button>
+        </div>
+      </div>
+
+      <!-- RECENT RUNS -->
+      <div class="icard">
+        <div class="stitle">Recent Runs</div>
+        <div id="runLog"><div style="font-size:13px;color:var(--iron);opacity:.4;padding:8px 0">No runs yet. Hit Run Pipeline to get started.</div></div>
+      </div>
+
+    </div>
+
+    <!-- REQUEST TAB -->
+    <div class="tab-pane" id="t-request">
+      <div class="icard">
+        <div class="stitle">Write a Specific Post</div>
+        <p style="font-size:13px;color:var(--iron);opacity:.6;line-height:1.75;margin-bottom:20px">Enter a topic or title — skips topic selection and writes this post directly via <code style="font-size:12px;background:var(--bg);padding:2px 6px;">/request-rrp-post</code>.</p>
+        <label class="flabel" for="reqT">Topic or title</label>
+        <input class="finput" type="text" id="reqT" placeholder="e.g. How to price your mini session packages">
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <button class="rrp-btn" onclick="writeSpec()">Write This Post</button>
+          <button class="rrp-btn outline" onclick="queueSpec()">Add to Queue</button>
+        </div>
+      </div>
+      <div class="icard" style="margin-top:20px">
+        <div class="stitle">Brainstorm Ideas</div>
+        <p style="font-size:13px;color:var(--iron);opacity:.6;line-height:1.75;margin-bottom:20px">Enter a theme — generate post ideas, then choose which to write or queue.</p>
+        <label class="flabel" for="bsT">Theme or cluster</label>
+        <input class="finput" type="text" id="bsT" placeholder="e.g. mini sessions / beginner pricing / posing families">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button class="rrp-btn" onclick="brainstorm()">Generate Ideas</button>
+          <select id="bsN" style="border:.5px solid var(--border);background:var(--bg);font-family:'Poppins',sans-serif;font-size:13px;color:var(--iron);padding:10px 14px;border-radius:0;outline:none;">
+            <option value="6">6 ideas</option>
+            <option value="8" selected>8 ideas</option>
+            <option value="10">10 ideas</option>
+          </select>
+        </div>
+        <div class="bs-results" id="bsRes" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- CALENDAR TAB -->
+    <div class="tab-pane" id="t-calendar">
+      <div class="icard">
+        <div class="stitle">Refresh Content Calendar</div>
+        <p style="font-size:13px;color:var(--iron);opacity:.6;line-height:1.75;margin-bottom:20px">When fewer than 20 posts remain in the queue, run <code style="font-size:12px;background:var(--bg);padding:2px 6px;">/refresh-rrp-calendar</code> to propose the next 60 posts. Proposed posts are presented for your review before anything is added.</p>
+        <div style="margin:0 0 24px;">
+          <div class="cal-check-item"><div class="cdot"></div>Reviews what's already been written from the topic log</div>
+          <div class="cal-check-item"><div class="cdot"></div>Identifies content gaps across all 13 topic clusters</div>
+          <div class="cal-check-item"><div class="cdot"></div>Checks seasonal timing and upcoming launches</div>
+          <div class="cal-check-item"><div class="cdot"></div>Balances cluster distribution across proposed posts</div>
+          <div class="cal-check-item"><div class="cdot"></div>Presents full list for your approval — nothing added automatically</div>
+        </div>
+        <button class="rrp-btn" id="btnCal" onclick="refreshCal()">Refresh Calendar</button>
+        <div id="calSt" style="margin-top:14px;font-size:13px;color:var(--iron);opacity:.6;display:none;line-height:1.7"></div>
+      </div>
+      <div class="icard">
+        <div class="stitle">Current Queue</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
+          <div><div class="ml">Posts planned</div><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--iron);margin-top:6px;">91</div></div>
+          <div><div class="ml">Topic clusters</div><div style="font-family:'Playfair Display',serif;font-size:28px;color:var(--iron);margin-top:6px;">13</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--iron);opacity:.4;line-height:1.6;">Pipeline restarted April 2026. Run /refresh-rrp-calendar when the queue runs low.</div>
+      </div>
+    </div>
+
+    <!-- PROGRESS TAB -->
+    <div class="tab-pane" id="t-progress">
+      <div class="big-stats">
+        <div class="bstat"><div class="bnum" id="pTotal">0</div><div class="blabel">Total Posts</div></div>
+        <div class="bstat"><div class="bnum" id="pWeek">0</div><div class="blabel">This Week</div></div>
+        <div class="bstat"><div class="bnum" id="pMonth">0</div><div class="blabel">This Month</div></div>
+      </div>
+      <div class="icard">
+        <div class="stitle">Milestones</div>
+        <div class="ms-item">
+          <div class="ms-num" id="ms10">10</div>
+          <div><div class="ms-title">First 10 Posts</div><div class="ms-sub">Blog is off the bench and publishing again</div></div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-num" id="ms30">30</div>
+          <div><div class="ms-title">30 Posts — Cluster Coverage</div><div class="ms-sub">Every major topic cluster has at least 2 anchor posts</div></div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-num" id="ms91">91</div>
+          <div><div class="ms-title">91 Posts — 90-Day Plan Complete</div><div class="ms-sub">Full content map implemented, SEO compound growth begins</div></div>
+        </div>
+        <div class="ms-item">
+          <div class="ms-num" id="ms200">200</div>
+          <div><div class="ms-title">200 Posts — Authority Library</div><div class="ms-sub">Comprehensive ownership across all 13 topic clusters</div></div>
+        </div>
+      </div>
+      <div class="icard">
+        <div class="stitle">Recent Posts</div>
+        <div id="pList"><div style="font-size:13px;color:var(--iron);opacity:.4;padding:8px 0">Posts will appear here after your first successful run.</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+
+// ─────────────────────────────────────────
+// FIREBASE
+// ─────────────────────────────────────────
+let db=null, fbGetFn=null, fbSetFn=null, fbRetryTimer=null;
+
+async function initFirebase(){
+  try{
+    const {initializeApp}                     = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const {getFirestore,doc,getDoc,setDoc}    = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const app = initializeApp({
+      apiKey:"AIzaSyAc8ReIqSJ0R8uRNrWI_frO7JFfut8VCzE",
+      authDomain:"rrp-agent-hub.firebaseapp.com",
+      projectId:"rrp-agent-hub",
+      storageBucket:"rrp-agent-hub.firebasestorage.app",
+      messagingSenderId:"646859835528",
+      appId:"1:646859835528:web:1e0c086367914e5dcc373d"
+    });
+    db = getFirestore(app);
+    fbGetFn = async(k)=>{ try{ const s=await getDoc(doc(db,'hub',k)); return s.exists()?s.data().value:null; }catch(e){console.error('fbGet',k,e);return null;} };
+    fbSetFn = async(k,v)=>{ try{ await setDoc(doc(db,'hub',k),{value:v}); return true; }catch(e){console.error('fbSet',k,e);return false;} };
+    await fbGetFn('_ping');
+    hideFbBanner();
+    if(fbRetryTimer){clearTimeout(fbRetryTimer);fbRetryTimer=null;}
+    console.log('Firebase connected ✓');
+    return true;
+  }catch(e){console.warn('Firebase unavailable:',e.message);return false;}
+}
+function showFbBanner(m){const b=document.getElementById('fbBanner'),t=document.getElementById('fbBannerText');if(b)b.style.display='flex';if(t&&m)t.textContent=m;}
+function hideFbBanner(){const b=document.getElementById('fbBanner');if(b)b.style.display='none';}
+function startFbRetry(){
+  if(fbRetryTimer)return;
+  let attempt=0;
+  const delays=[5000,10000,20000,30000];
+  const tryAgain=async()=>{
+    attempt++;
+    const d=delays[Math.min(attempt,delays.length-1)];
+    showFbBanner(`Not connected — retrying in ${d/1000}s… (attempt ${attempt})`);
+    const ok=await initFirebase();
+    if(ok){loadPersistedData().catch(()=>{});toast('✓ Sync restored.');}
+    else fbRetryTimer=setTimeout(tryAgain,d);
+  };
+  fbRetryTimer=setTimeout(tryAgain,delays[0]);
+}
+async function fbGet(k){if(!fbGetFn){showFbBanner('Not connected — retrying shortly…');startFbRetry();return null;}return fbGetFn(k);}
+async function fbSet(k,v){if(!fbSetFn){showFbBanner('Not connected — retrying shortly…');startFbRetry();return false;}const r=await fbSetFn(k,v);if(r===false){showFbBanner('Save failed — retrying shortly…');startFbRetry();}return r;}
+const fbReady=initFirebase().then(ok=>{if(!ok){showFbBanner('Could not connect — retrying…');startFbRetry();}return ok;});
+
+// ─────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────
+const EK='rrp_hub_email';
+const getSavedEmail=()=>{try{return localStorage.getItem(EK)||null;}catch{return null;}};
+const saveEmail=e=>{try{localStorage.setItem(EK,e);}catch{}};
+const clearEmail=()=>{try{localStorage.removeItem(EK);}catch{}};
+
+function doLogin(){
+  const input=document.getElementById('loginEmail');
+  const errEl=document.getElementById('loginErr');
+  const email=input.value.trim().toLowerCase();
+  errEl.textContent='';
+  if(!email||!email.includes('@')||!email.includes('.')){errEl.textContent='Please enter a valid email address.';return;}
+  document.getElementById('loginBtn').disabled=true;
+  document.getElementById('loginBtn').textContent='Loading…';
+  saveEmail(email);
+  bootApp(email);
+}
+function doLogout(){clearEmail();location.reload();}
+
+// ─────────────────────────────────────────
+// AGENT DEFINITIONS
+// ─────────────────────────────────────────
+const P1_AGENTS = [
+  {num:'01',name:'Topic Cluster Manager',     desc:'Reads Trello dates + Google Calendar blackouts. Selects next post.',        model:'Haiku'},
+  {num:'02',name:'Keyword & Question Researcher',desc:'Web research — finds primary keyword and real search intent.',            model:'Sonnet'},
+  {num:'03',name:'Competitor Content Auditor',desc:'Reads top 3 competing pages, finds content gaps.',                          model:'Sonnet'},
+  {num:'04',name:'Content Strategist',        desc:'Designs H2 structure, CTA plan, secondary CTA placements.',                 model:'Haiku'},
+  {num:'05',name:'Internal Link Mapper',      desc:'Verifies all internal links via WordPress API, generates UTM URLs.',         model:'Haiku'},
+  {num:'06',name:'Writer',                    desc:"Writes full post in Rebecca's voice.",                                       model:'Sonnet'},
+  {num:'07',name:'Student Experience Auditor',desc:'Quality audits for voice, teaching, technical — loops back to 06 max 2×.',  model:'Sonnet'},
+  {num:'08',name:'Yoast SEO Writer',          desc:'Writes SEO title, meta description, focus keyword, slug, tags.',            model:'Haiku'},
+  {num:'09',name:'WordPress Publisher',       desc:'Saves backup, publishes as Draft with scheduled date.',                     model:'Haiku'},
+  {num:'15a',name:'Team Handoff — Phase 1',   desc:'Posts Trello comment + adds to Blog Drafts to Approve checklist.',          model:'Haiku'},
+];
+const P2_AGENTS = [
+  {num:'10',name:'NotebookLM Audio Generator',desc:'Launches RRP Chrome, creates notebook, generates + downloads MP3.',          model:'Sonnet'},
+  {num:'11',name:'Show Notes Writer',         desc:'Writes episode description + full show notes with UTM links.',               model:'Sonnet'},
+  {num:'12',name:'Captivate Publisher',       desc:'Uploads MP3, publishes episode with future date — auto-releases.',           model:'Haiku'},
+  {num:'13',name:'Audio Embed Injector',      desc:'Injects Captivate player at top of WordPress post.',                        model:'Haiku'},
+  {num:'14',name:'Kit Email Drafter',         desc:"Writes email in Rebecca's voice, creates Kit draft, 3 subject lines.",       model:'Sonnet'},
+  {num:'15b',name:'Team Handoff — Phase 2',   desc:'Updates Trello comment, moves item to Emails to Schedule checklist.',        model:'Haiku'},
+];
+
+// Sim timing (seconds) per agent
+const P1_SIM=[90,240,240,90,45,480,240,75,60,45];
+const P2_SIM=[360,150,90,60,240,45];
+
+// ─────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────
+let running=false, etimer=null, stimer1=null, stimer2=null;
+let p1Active=false, p2Active=false, p1AgentIdx=0, p2AgentIdx=0;
+let p1PostTitle='', p2PostTitle='';
+let sec=0;
+let totalPosts=0, weekPosts=0, monthPosts=0;
+let runLog=[];
+let statusPoller=null, serverConnected=false;
+const SERVER='http://localhost:3002';
+
+// ─────────────────────────────────────────
+// RENDER AGENTS
+// ─────────────────────────────────────────
+function renderAgents(phase, activeIdx){ // activeIdx = 1-based, 0=all idle, >length=all done
+  const agents = phase===1 ? P1_AGENTS : P2_AGENTS;
+  const el = document.getElementById(`p${phase}AgentList`);
+  if(!el)return;
+  el.innerHTML = agents.map((a,i)=>{
+    const n=i+1;
+    let sc,sl,op;
+    if(activeIdx===0){sc='as-idle';sl='Idle';op='1';}
+    else if(n<activeIdx){sc='as-done';sl='Done ✓';op='.65';}
+    else if(n===activeIdx){sc='as-running';sl='Running';op='1';}
+    else{sc='as-idle';sl='Idle';op='.5';}
+    return `<div class="agent-row" style="opacity:${op}">
+      <div class="agent-num">${a.num}</div>
+      <div class="agent-info">
+        <div class="agent-name">${a.name}</div>
+        <div class="agent-desc">${a.desc}</div>
+        <div class="agent-model">${a.model}</div>
+      </div>
+      <div class="agent-status ${sc}">${sl}</div>
+    </div>`;
+  }).join('');
+}
+
+function initAgentLists(){renderAgents(1,0);renderAgents(2,0);}
+
+// ─────────────────────────────────────────
+// PHASE UI
+// ─────────────────────────────────────────
+function setPhase(phase, status, postTitle){
+  const badge=document.getElementById(`p${phase}Badge`);
+  const fill=document.getElementById(`p${phase}ProgFill`);
+  const sec=document.getElementById(`p${phase}Sec`);
+  const working=document.getElementById(`p${phase}Working`);
+  if(status==='idle'){
+    badge.textContent='Idle';badge.className='phase-badge pb-idle';
+    sec.classList.remove('phase-active','phase-done');
+    fill.style.width='0%';fill.classList.remove('done');
+    working.textContent='';working.classList.add('hidden');
+  } else if(status==='running'){
+    badge.textContent='Running';badge.className='phase-badge pb-running';
+    sec.classList.add('phase-active');sec.classList.remove('phase-done');
+    if(postTitle){working.textContent='Working on: '+postTitle;working.classList.remove('hidden');}
+  } else if(status==='done'){
+    badge.textContent='Done ✓';badge.className='phase-badge pb-done';
+    sec.classList.remove('phase-active');sec.classList.add('phase-done');
+    fill.style.width='100%';fill.classList.add('done');
+    working.textContent='';working.classList.add('hidden');
+  }
+}
+
+function setPhaseAgent(phase, agentNum){
+  const agents = phase===1 ? P1_AGENTS : P2_AGENTS;
+  const fill = document.getElementById(`p${phase}ProgFill`);
+  const pct = Math.round(((agentNum-1)/agents.length)*100);
+  fill.style.width=pct+'%';
+  renderAgents(phase, agentNum);
+  updateOverallBar();
+}
+
+function updateOverallBar(){
+  const p1Pct = P1_AGENTS.length ? Math.min(100,Math.round((p1AgentIdx/P1_AGENTS.length)*100)) : 0;
+  const p2Pct = P2_AGENTS.length ? Math.min(100,Math.round((p2AgentIdx/P2_AGENTS.length)*100)) : 0;
+  const overall = p2Active ? Math.round(p1Pct*0.55 + p2Pct*0.45) : p1Pct;
+  document.getElementById('overallFill').style.width=overall+'%';
+}
+
+window.togglePhase=function(phase){
+  const body=document.getElementById(`p${phase}Body`);
+  const chev=document.getElementById(`p${phase}Chev`);
+  const collapsed=body.classList.toggle('collapsed');
+  chev.classList.toggle('up',collapsed);
+};
+
+// ─────────────────────────────────────────
+// SERVER
+// ─────────────────────────────────────────
+async function callServer(endpoint,method='POST',body=null){
+  try{
+    const opts={method,headers:{'Content-Type':'application/json'},signal:AbortSignal.timeout(3000)};
+    if(body)opts.body=JSON.stringify(body);
+    const r=await fetch(`${SERVER}${endpoint}`,opts);
+    return await r.json();
+  }catch{return null;}
+}
+
+// ─────────────────────────────────────────
+// STATUS POLLER (live from server)
+// ─────────────────────────────────────────
+function startPoller(){
+  stopPoller();
+  statusPoller=setInterval(async()=>{
+    const s=await callServer('/status','GET');
+    if(!s)return;
+    serverConnected=true;
+    clearTimeout(stimer1);clearTimeout(stimer2); // kill sims — server has taken over
+
+    // Phase 1
+    if(s.phase1){
+      if(s.phase1.running && s.phase1.currentAgent){
+        p1Active=true; p1AgentIdx=s.phase1.currentAgent;
+        p1PostTitle=s.phase1.postTitle||p1PostTitle;
+        setPhase(1,'running',p1PostTitle);
+        setPhaseAgent(1,s.phase1.currentAgent);
+      } else if(s.phase1.done){
+        p1Active=false;
+        setPhase(1,'done');
+        renderAgents(1,P1_AGENTS.length+1);
+      }
+    }
+
+    // Phase 2
+    if(s.phase2){
+      if(s.phase2.running && s.phase2.currentAgent){
+        if(!p2Active){
+          // Auto-expand phase 2 when it starts
+          document.getElementById('p2Body').classList.remove('collapsed');
+          document.getElementById('p2Chev').classList.remove('up');
+        }
+        p2Active=true; p2AgentIdx=s.phase2.currentAgent;
+        p2PostTitle=s.phase2.postTitle||p2PostTitle;
+        setPhase(2,'running',p2PostTitle);
+        setPhaseAgent(2,s.phase2.currentAgent);
+      } else if(s.phase2.done){
+        p2Active=false;
+        setPhase(2,'done');
+        renderAgents(2,P2_AGENTS.length+1);
+      }
+    }
+
+    if(s.elapsed) document.getElementById('elapsedLbl').textContent=s.elapsed+' elapsed';
+
+    // All done
+    if(s.done || (s.running===false && !s.phase1?.running && !s.phase2?.running)){
+      stopPoller();
+      finish(s.totalPosts||1, s.draftUrls||[]);
+    }
+  },2000);
+}
+function stopPoller(){if(statusPoller){clearInterval(statusPoller);statusPoller=null;}}
+
+// ─────────────────────────────────────────
+// SIMULATION (fallback when server offline)
+// ─────────────────────────────────────────
+const SIM_TITLES=['How to price your mini session packages','5 posing tips for family sessions','What to include in your client welcome guide','Why your gallery delivery experience matters','How to choose your first photography niche'];
+
+function runSim(cnt, delayStart){
+  const title=SIM_TITLES[Math.floor(Math.random()*SIM_TITLES.length)];
+  const doSim=()=>{
+    if(!running||serverConnected)return;
+    p1PostTitle=title;
+    setPhase(1,'running',title);
+    let agIdx=0;
+    function nextAgent(){
+      if(!running||serverConnected)return;
+      if(agIdx>=P1_AGENTS.length){
+        setPhase(1,'done');renderAgents(1,P1_AGENTS.length+1);
+        finish(cnt,[]);
+        return;
+      }
+      p1AgentIdx=agIdx+1;
+      setPhaseAgent(1,agIdx+1);
+      const delay=(P1_SIM[agIdx]||60)*(0.35+Math.random()*0.4)*1000;
+      stimer1=setTimeout(()=>{agIdx++;nextAgent();},delay);
+    }
+    nextAgent();
+  };
+  if(delayStart){stimer1=setTimeout(doSim,5000);}
+  else doSim();
+}
+
+// ─────────────────────────────────────────
+// RUN / STOP
+// ─────────────────────────────────────────
+async function runPipeline(){
+  if(running)return;
+  const cnt=+document.getElementById('pCount').value||1;
+  document.getElementById('compBanner').classList.remove('vis');
+
+  // Reset phase UI
+  setPhase(1,'idle'); setPhase(2,'idle');
+  initAgentLists();
+  // Expand phase 1, collapse phase 2
+  document.getElementById('p1Body').classList.remove('collapsed');
+  document.getElementById('p1Chev').classList.remove('up');
+  document.getElementById('p2Body').classList.add('collapsed');
+  document.getElementById('p2Chev').classList.add('up');
+
+  running=true; p1Active=false; p2Active=false; serverConnected=false;
+  p1AgentIdx=0; p2AgentIdx=0;
+  document.getElementById('btnRun').disabled=true;
+  document.getElementById('btnStop').style.display='inline-flex';
+  document.getElementById('overallBarWrap').style.display='block';
+  document.getElementById('overallFill').style.background='var(--pink)';
+  document.getElementById('overallFill').style.width='0%';
+  document.getElementById('gDot').className='sdot running';
+  document.getElementById('gStatus').textContent='Pipeline running…';
+  document.getElementById('cBadge').textContent='Running';
+  document.getElementById('cBadge').className='cbadge b-running';
+
+  sec=0; clearInterval(etimer);
+  etimer=setInterval(()=>{sec++;const m=Math.floor(sec/60),s=sec%60;document.getElementById('elapsedLbl').textContent=m+':'+String(s).padStart(2,'0')+' elapsed';},1000);
+
+  // Try server
+  const live=await callServer('/status','GET');
+  if(live!==null){
+    const res=await callServer('/run-rrp-pipeline','POST',{posts:cnt});
+    if(!res)toast('⚠ Server reachable but run command failed — preview mode');
+    startPoller();
+    runSim(cnt,true); // delayed sim as fallback
+  } else {
+    toast('Local server offline — preview mode');
+    runSim(cnt,false);
+  }
+}
+
+function stopPipeline(){
+  stopPoller(); clearInterval(etimer); clearTimeout(stimer1); clearTimeout(stimer2);
+  running=false; p1Active=false; p2Active=false; serverConnected=false;
+  try{callServer('/stop','POST');}catch{}
+  document.getElementById('btnRun').disabled=false;
+  document.getElementById('btnStop').style.display='none';
+  document.getElementById('overallBarWrap').style.display='none';
+  document.getElementById('gDot').className='sdot';
+  document.getElementById('gStatus').textContent='All systems idle';
+  document.getElementById('cBadge').textContent='Idle';
+  document.getElementById('cBadge').className='cbadge b-idle';
+  setPhase(1,'idle'); setPhase(2,'idle');
+  initAgentLists();
+  toast('Pipeline stopped');
+}
+
+function finish(cnt, urls){
+  if(!running)return;
+  running=false; p1Active=false; p2Active=false;
+  stopPoller(); clearInterval(etimer);
+
+  document.getElementById('overallFill').style.width='100%';
+  document.getElementById('overallFill').style.background='var(--green)';
+  document.getElementById('btnRun').disabled=false;
+  document.getElementById('btnStop').style.display='none';
+  document.getElementById('gDot').className='sdot done';
+  document.getElementById('gStatus').textContent='Last run complete';
+  document.getElementById('cBadge').textContent='Done ✓';
+  document.getElementById('cBadge').className='cbadge b-done';
+
+  const b=document.getElementById('compBanner');
+  document.getElementById('compText').textContent=cnt+(cnt===1?' post':' posts')+' published to WordPress drafts.';
+  if(urls.length)document.getElementById('compLink').href=urls[0];
+  b.classList.add('vis');
+
+  totalPosts+=cnt; weekPosts+=cnt; monthPosts+=cnt;
+  document.getElementById('sWeek').textContent=weekPosts;
+  document.getElementById('pTotal').textContent=totalPosts;
+  document.getElementById('pWeek').textContent=weekPosts;
+  document.getElementById('pMonth').textContent=monthPosts;
+  [10,30,91,200].forEach(n=>document.getElementById('ms'+n)?.classList.toggle('hit',totalPosts>=n));
+
+  const now=new Date();
+  const ds=now.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('sLast').textContent=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('sLastSub').textContent='Today';
+  document.getElementById('cLast').textContent='Today';
+
+  runLog.unshift({date:ds,cnt,urls,p1Title:p1PostTitle,p2Title:p2PostTitle});
+  if(runLog.length>20)runLog.pop();
+
+  fbSet('runs',runLog);
+  fbSet('stats',{total:totalPosts,week:weekPosts,month:monthPosts,lastRun:ds});
+
+  renderRunLog();
+  toast(cnt+(cnt===1?' post':' posts')+' sent to WordPress drafts');
+
+  setTimeout(()=>{
+    document.getElementById('gDot').className='sdot';
+    document.getElementById('gStatus').textContent='All systems idle';
+    document.getElementById('cBadge').textContent='Idle';
+    document.getElementById('cBadge').className='cbadge b-idle';
+    document.getElementById('overallBarWrap').style.display='none';
+  },14000);
+}
+
+// ─────────────────────────────────────────
+// BOOT STATUS CHECK (resume if already running)
+// ─────────────────────────────────────────
+async function bootStatusCheck(){
+  const s=await callServer('/status','GET');
+  if(!s)return;
+  if(s.running||s.phase1?.running||s.phase2?.running){
+    running=true; serverConnected=true;
+    document.getElementById('btnRun').disabled=true;
+    document.getElementById('btnStop').style.display='inline-flex';
+    document.getElementById('overallBarWrap').style.display='block';
+    document.getElementById('gDot').className='sdot running';
+    document.getElementById('gStatus').textContent='Pipeline running…';
+    document.getElementById('cBadge').textContent='Running';
+    document.getElementById('cBadge').className='cbadge b-running';
+    if(s.phase1?.running){
+      setPhase(1,'running',s.phase1.postTitle||'');
+      if(s.phase1.currentAgent)setPhaseAgent(1,s.phase1.currentAgent);
+    }
+    if(s.phase2?.running){
+      document.getElementById('p2Body').classList.remove('collapsed');
+      document.getElementById('p2Chev').classList.remove('up');
+      setPhase(2,'running',s.phase2.postTitle||'');
+      if(s.phase2.currentAgent)setPhaseAgent(2,s.phase2.currentAgent);
+    }
+    openPanel();
+    startPoller();
+    // Resume elapsed timer from server data
+    sec=0; clearInterval(etimer);
+    etimer=setInterval(()=>{sec++;const m=Math.floor(sec/60),sv=sec%60;document.getElementById('elapsedLbl').textContent=m+':'+String(sv).padStart(2,'0')+' elapsed';},1000);
+    toast('Pipeline already running — resuming status…');
+  }
+}
+
+// ─────────────────────────────────────────
+// SCHEDULE
+// ─────────────────────────────────────────
+async function saveSched(){
+  const days=['mon','tue','wed','thu','fri','sat','sun']
+    .filter(d=>document.getElementById('d-'+d).checked)
+    .map(d=>d[0].toUpperCase()+d.slice(1));
+  if(!days.length){toast('Pick at least one day');return;}
+  const time=document.getElementById('sTime').value;
+  const cnt=document.getElementById('sCount').value;
+  const data={days,time,posts:parseInt(cnt)||1,savedAt:new Date().toISOString()};
+  await fbSet('schedule',data);
+  callServer('/schedule','POST',data).catch(()=>{});
+  document.getElementById('cSched').textContent=days.join(', ')+' at '+time;
+  document.getElementById('schedSavedText').textContent=`Runs ${days.join(', ')} at ${time} · ${cnt} post${cnt==='1'?'':'s'} per run`;
+  document.getElementById('schedEdit').style.display='none';
+  document.getElementById('schedSaved').classList.add('vis');
+  toast('Schedule saved');
+}
+function editSched(){
+  document.getElementById('schedEdit').style.display='block';
+  document.getElementById('schedSaved').classList.remove('vis');
+}
+async function loadSchedule(){
+  const s=await fbGet('schedule');
+  if(!s)return;
+  const {days,time,posts}=s;
+  if(days)days.forEach(d=>{const cb=document.getElementById('d-'+d.toLowerCase());if(cb)cb.checked=true;});
+  if(time)document.getElementById('sTime').value=time;
+  if(posts)document.getElementById('sCount').value=posts;
+  document.getElementById('cSched').textContent=(days&&days.length)?days.join(', ')+' at '+time:'Not set';
+  document.getElementById('schedSavedText').textContent=`Runs ${(days||[]).join(', ')} at ${time||''} · ${posts||1} post${posts===1?'':'s'} per run`;
+  document.getElementById('schedEdit').style.display='none';
+  document.getElementById('schedSaved').classList.add('vis');
+}
+
+// ─────────────────────────────────────────
+// RUN LOG
+// ─────────────────────────────────────────
+function renderRunLog(){
+  const el=document.getElementById('runLog');
+  if(!runLog.length){el.innerHTML='<div style="font-size:13px;color:var(--iron);opacity:.4;padding:8px 0">No runs yet.</div>';return;}
+  el.innerHTML=runLog.map(r=>`<div class="run-entry">
+    <div class="rdot ok"></div>
+    <div class="rinfo">
+      <div class="rtitle">${r.cnt} post${r.cnt!==1?'s':''} to WordPress drafts${r.p1Title?` &mdash; <span style="opacity:.55;font-style:italic">${r.p1Title}</span>`:''}</div>
+      <div class="rmeta">${r.date}</div>
+    </div>
+    <a class="rlink" href="${(r.urls&&r.urls[0])||'https://rebeccaricephoto.com/wp-admin/edit.php?post_status=draft&post_type=post'}" target="_blank" rel="noopener">View Draft</a>
+  </div>`).join('');
+  document.getElementById('pList').innerHTML=runLog.map(r=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:.5px solid var(--border);font-size:13px;color:var(--iron)">
+    <span>${r.cnt} post${r.cnt!==1?'s':''} &mdash; ${r.date}</span>
+    <a class="rlink" href="${(r.urls&&r.urls[0])||'https://rebeccaricephoto.com/wp-admin/edit.php?post_status=draft&post_type=post'}" target="_blank" rel="noopener">View</a>
+  </div>`).join('');
+}
+async function loadRuns(){
+  const r=await fbGet('runs');
+  if(!r||!r.length)return;
+  runLog=r; renderRunLog();
+}
+async function loadStats(){
+  const s=await fbGet('stats');
+  if(!s)return;
+  totalPosts=s.total||0; weekPosts=s.week||0; monthPosts=s.month||0;
+  document.getElementById('sWeek').textContent=weekPosts;
+  document.getElementById('pTotal').textContent=totalPosts;
+  document.getElementById('pWeek').textContent=weekPosts;
+  document.getElementById('pMonth').textContent=monthPosts;
+  [10,30,91,200].forEach(n=>document.getElementById('ms'+n)?.classList.toggle('hit',totalPosts>=n));
+  if(s.lastRun){
+    const parts=s.lastRun.split(' at ');
+    document.getElementById('sLast').textContent=parts[1]||'—';
+    document.getElementById('sLastSub').textContent=parts[0]||'';
+    document.getElementById('cLast').textContent=parts[0]||'—';
+  }
+}
+async function loadPersistedData(){await Promise.all([loadSchedule(),loadStats(),loadRuns()]);}
+
+// ─────────────────────────────────────────
+// PANEL / TABS
+// ─────────────────────────────────────────
+function openPanel(){document.getElementById('panel').classList.add('open');document.getElementById('overlay').classList.add('open');document.body.style.overflow='hidden';}
+function closePanel(){document.getElementById('panel').classList.remove('open');document.getElementById('overlay').classList.remove('open');document.body.style.overflow='';}
+function swTab(e,n){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));e.target.classList.add('active');document.getElementById('t-'+n).classList.add('active');}
+function adj(d){const e=document.getElementById('pCount');e.value=Math.min(5,Math.max(1,+e.value+d));}
+
+// ─────────────────────────────────────────
+// REQUEST / BRAINSTORM
+// ─────────────────────────────────────────
+function writeSpec(){const t=document.getElementById('reqT').value.trim();if(!t){toast('Enter a topic first');return;}document.getElementById('reqT').value='';toast('Starting post…');closePanel();setTimeout(openPanel,80);setTimeout(runPipeline,200);}
+function queueSpec(){const t=document.getElementById('reqT').value.trim();if(!t){toast('Enter a topic first');return;}document.getElementById('reqT').value='';toast('Added to queue');}
+function brainstorm(){
+  const theme=document.getElementById('bsT').value.trim();
+  if(!theme){toast('Enter a theme first');return;}
+  const n=+document.getElementById('bsN').value||8;
+  const res=document.getElementById('bsRes');
+  res.style.display='block';
+  res.innerHTML='<div style="font-size:13px;color:var(--iron);opacity:.45;padding:8px 0">Generating ideas…</div>';
+  const ideas=[
+    `How to ${theme} without feeling salesy`,`The ${theme} strategy that books clients on autopilot`,
+    `5 ways ${theme} can fill your calendar this season`,`Why most photographers get ${theme} wrong`,
+    `A beginner's guide to ${theme} for portrait photographers`,`What I learned after 6 years of ${theme}`,
+    `The ${theme} checklist every photographer needs`,`How to simplify your ${theme} process in one afternoon`,
+    `Why ${theme} is the most underrated booking tool`,`The ${theme} mistake quietly costing you clients`
+  ].slice(0,n);
+  setTimeout(()=>{res.innerHTML=ideas.map(idea=>{const s=idea.replace(/'/g,"\\'").replace(/"/g,'&quot;');return`<div class="bs-item"><div class="bs-topic">${idea}</div><div class="bs-acts"><button class="rrp-btn sm" onclick="bsWrite('${s}')">Write</button><button class="rrp-btn outline sm" onclick="bsQueue('${s}')">Queue</button></div></div>`;}).join('');},700);
+}
+function bsWrite(t){toast('Starting post…');runPipeline();}
+function bsQueue(t){toast('Added to queue');}
+
+// ─────────────────────────────────────────
+// CALENDAR
+// ─────────────────────────────────────────
+function refreshCal(){
+  const btn=document.getElementById('btnCal'),st=document.getElementById('calSt');
+  btn.disabled=true;btn.textContent='Running…';
+  st.style.display='block';st.textContent='Analyzing topic log, content map, and calendar… this takes 5–10 minutes.';
+  setTimeout(()=>{btn.disabled=false;btn.textContent='Refresh Calendar';st.textContent='Calendar refresh complete. Review proposed posts in Claude Code before they\'re added to the queue.';},4000);
+}
+
+// ─────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ─────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────
+async function bootApp(email){
+  const ls=document.getElementById('loginScreen');
+  ls.classList.add('fade-out');
+  setTimeout(()=>ls.classList.add('gone'),380);
+  document.getElementById('userLbl').textContent=email;
+  document.getElementById('userPill').style.display='flex';
+  document.getElementById('logoutBtn').style.display='block';
+  initAgentLists();
+  bootStatusCheck();
+  await fbReady;
+  loadPersistedData().catch(e=>console.warn('loadPersistedData:',e));
+}
+
+// Wire events
+document.getElementById('loginBtn').addEventListener('click',doLogin);
+document.getElementById('loginEmail').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('logoutBtn').addEventListener('click',doLogout);
+
+// Expose to onclick
+window.openPanel   = openPanel;
+window.closePanel  = closePanel;
+window.swTab       = swTab;
+window.adj         = adj;
+window.togglePhase = togglePhase;
+window.runPipeline = runPipeline;
+window.stopPipeline= stopPipeline;
+window.saveSched   = saveSched;
+window.editSched   = editSched;
+window.writeSpec   = writeSpec;
+window.queueSpec   = queueSpec;
+window.brainstorm  = brainstorm;
+window.bsWrite     = bsWrite;
+window.bsQueue     = bsQueue;
+window.refreshCal  = refreshCal;
+window.toast       = toast;
+
+// Auto-boot if email saved
+const savedEmail=getSavedEmail();
+if(savedEmail){document.getElementById('loginScreen').classList.add('gone');bootApp(savedEmail);}
+
+</script>
+</body>
+</html>
