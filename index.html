@@ -660,6 +660,7 @@ const P1_AGENTS = [
   {num:'04',name:'Content Strategist',        desc:'Designs H2 structure, CTA plan, secondary CTA placements.',                 model:'Haiku'},
   {num:'05',name:'Internal Link Mapper',      desc:'Verifies all internal links via WordPress API, generates UTM URLs.',         model:'Haiku'},
   {num:'06',name:'Writer',                    desc:"Writes full post in Rebecca's voice.",                                       model:'Sonnet'},
+  {num:'06b',name:'Quality Gate',             desc:'Mechanical checks: em-dashes=0, exclamation count, no PMC links, no HTML comments. Returns to Writer if any fail.', model:'Haiku'},
   {num:'07',name:'Student Experience Auditor',desc:'Quality audits for voice, teaching, technical — loops back to 06 max 2×.',  model:'Sonnet'},
   {num:'08',name:'Yoast SEO Writer',          desc:'Writes SEO title, meta description, focus keyword, slug, tags.',            model:'Haiku'},
   {num:'09',name:'WordPress Publisher',       desc:'Saves backup, publishes as Draft with scheduled date.',                     model:'Haiku'},
@@ -675,7 +676,7 @@ const P2_AGENTS = [
 ];
 
 // Sim timing (seconds) per agent
-const P1_SIM=[90,240,240,90,45,480,240,75,60,45];
+const P1_SIM=[90,240,240,90,45,480,60,240,75,60,45];
 const P2_SIM=[360,150,90,60,240,45];
 
 // ─────────────────────────────────────────
@@ -687,7 +688,7 @@ let p1PostTitle='', p2PostTitle='';
 let sec=0;
 let totalPosts=0, weekPosts=0, monthPosts=0;
 let runLog=[];
-let statusPoller=null, serverConnected=false;
+let statusPoller=null, routinePoller=null, serverConnected=false;
 const SERVER='http://localhost:3002';
 
 // ─────────────────────────────────────────
@@ -950,7 +951,7 @@ function finish(cnt, urls){
   document.getElementById('sLastSub').textContent='Today';
   document.getElementById('cLast').textContent='Today';
 
-  runLog.unshift({date:ds,cnt,urls,p1Title:p1PostTitle,p2Title:p2PostTitle});
+  runLog.unshift({date:ds,cnt,urls,p1Title:p1PostTitle,p2Title:p2PostTitle,completedAt:new Date().toISOString()});
   if(runLog.length>20)runLog.pop();
 
   fbSet('runs',runLog);
@@ -1076,7 +1077,39 @@ async function loadStats(){
     document.getElementById('cLast').textContent=parts[0]||'—';
   }
 }
-async function loadPersistedData(){await Promise.all([loadSchedule(),loadStats(),loadRuns()]);}
+async function recoverLastRun(){
+  const s=await callServer('/status','GET');
+  if(!s||!s.lastRun)return;
+  const lr=s.lastRun;
+  if(!lr.completedAt)return;
+  const now=new Date(lr.completedAt);
+  const lrDate=now.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  // Skip if already in run log (dedup by exact completedAt timestamp)
+  if(runLog.some(r=>r.completedAt===lr.completedAt))return;
+  const ds=lrDate+' at '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  const cnt=lr.posts||1;
+  runLog.unshift({date:ds,cnt,urls:lr.draftUrls||[],p1Title:lr.phase1Title||'',completedAt:lr.completedAt});
+  if(runLog.length>20)runLog.pop();
+  totalPosts+=cnt;weekPosts+=cnt;monthPosts+=cnt;
+  document.getElementById('sLast').textContent=now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('sLastSub').textContent=lrDate;
+  document.getElementById('cLast').textContent=lrDate;
+  document.getElementById('sWeek').textContent=weekPosts;
+  document.getElementById('pTotal').textContent=totalPosts;
+  document.getElementById('pWeek').textContent=weekPosts;
+  document.getElementById('pMonth').textContent=monthPosts;
+  [10,30,91,200].forEach(n=>document.getElementById('ms'+n)?.classList.toggle('hit',totalPosts>=n));
+  fbSet('runs',runLog);
+  fbSet('stats',{total:totalPosts,week:weekPosts,month:monthPosts,lastRun:ds});
+  renderRunLog();
+  toast('Overnight run recovered \u2014 '+cnt+(cnt===1?' post':' posts')+' written on '+lrDate);
+}
+async function loadPersistedData(){
+  await Promise.all([loadSchedule(),loadStats(),loadRuns()]);
+  await recoverLastRun();
+  // Poll every 60s to pick up routine runs that completed while dashboard was open
+  routinePoller=setInterval(()=>{if(!running)recoverLastRun();},60000);
+}
 
 // ─────────────────────────────────────────
 // PANEL / TABS
