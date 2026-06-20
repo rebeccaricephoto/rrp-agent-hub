@@ -308,8 +308,8 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
   <div class="stat-strip">
     <div class="stat-card">
       <div class="stat-label">Active Teams</div>
-      <div class="stat-value">1</div>
-      <div class="stat-detail">1 more coming soon</div>
+      <div class="stat-value">2</div>
+      <div class="stat-detail">2 more coming soon</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Posts This Week</div>
@@ -318,8 +318,8 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
     </div>
     <div class="stat-card">
       <div class="stat-label">Total Agents</div>
-      <div class="stat-value">15</div>
-      <div class="stat-detail">across 2 phases</div>
+      <div class="stat-value">25</div>
+      <div class="stat-detail">across 2 teams</div>
     </div>
     <div class="stat-card">
       <div class="stat-label">Last Run</div>
@@ -346,6 +346,34 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
         <div><div class="ml">Schedule</div><div class="mv" id="cSched">Not set</div></div>
         <div><div class="ml">Last run</div><div class="mv" id="cLast">—</div></div>
       </div>
+    </div>
+
+    <div class="team-card" onclick="openBookkeeperPanel()">
+      <div class="card-top">
+        <div>
+          <div class="card-ey">Bookkeeper</div>
+          <div class="card-name">SCC Bookkeeper</div>
+        </div>
+        <div class="cbadge b-idle" id="bkCBadge">Idle</div>
+      </div>
+      <div class="card-desc">Pulls transaction data from Stripe, PayPal, and Kajabi, classifies by product, and enters itemized split deposits directly into QuickBooks Online via API. Runs daily at 6am. RRP agents activate in Phase 2.</div>
+      <div class="card-meta">
+        <div><div class="ml">Agents</div><div class="mv">10</div></div>
+        <div><div class="ml">Schedule</div><div class="mv">Daily 6am</div></div>
+        <div><div class="ml">Last run</div><div class="mv" id="bkCLast">—</div></div>
+      </div>
+    </div>
+
+    <div class="team-card soon">
+      <div class="card-top">
+        <div>
+          <div class="card-ey">Bookkeeper</div>
+          <div class="card-name">RRP Bookkeeper</div>
+        </div>
+        <div class="cbadge b-soon">Coming Soon</div>
+      </div>
+      <div class="card-desc">RRP transaction processing — Stripe, PayPal, and Kajabi. All infrastructure is already in place. Activates in Phase 2 after SCC pipeline is validated.</div>
+      <div class="card-meta"><div><div class="ml">Status</div><div class="mv">Phase 2</div></div></div>
     </div>
 
     <div class="team-card soon">
@@ -572,6 +600,93 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
       <div class="icard">
         <div class="stitle">Recent Posts</div>
         <div id="pList"><div style="font-size:13px;color:var(--iron);opacity:.4;padding:8px 0">Posts will appear here after your first successful run.</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- BOOKKEEPER OVERLAY -->
+<div class="overlay" id="bkOverlay" onclick="closeBookkeeperPanel()"></div>
+
+<!-- BOOKKEEPER PANEL -->
+<div class="panel" id="bkPanel">
+  <div class="panel-head">
+    <div class="panel-head-top">
+      <div>
+        <div class="panel-ey">Bookkeeper &middot; 10 Agents &middot; QBO API</div>
+        <div class="panel-title">SCC Bookkeeper</div>
+      </div>
+      <button class="close-btn" onclick="closeBookkeeperPanel()">&#x2715;</button>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="swBkTab(event,'run')">Run Pipeline</button>
+      <button class="tab-btn" onclick="swBkTab(event,'agents')">Agents</button>
+    </div>
+  </div>
+
+  <div class="panel-body">
+
+    <!-- RUN TAB -->
+    <div class="tab-pane active" id="t-bk-run">
+
+      <div class="comp-banner" id="bkCompBanner">
+        <div class="comp-text" id="bkCompText">Split deposits created in QuickBooks Online.</div>
+        <a class="comp-link" id="bkCompLink" href="https://app.qbo.intuit.com/app/banking" target="_blank" rel="noopener">Open QuickBooks &rarr;</a>
+      </div>
+
+      <div class="icard">
+        <div class="stitle">Run Now</div>
+        <div class="run-row">
+          <button class="rrp-btn" id="btnBkRun" onclick="runBookkeeperPipeline()">Run Pipeline</button>
+          <button class="rrp-btn stop-btn" id="btnBkStop" onclick="stopBookkeeperPipeline()" style="display:none">Stop</button>
+        </div>
+        <div class="overall-bar-wrap" id="bkOverallBarWrap">
+          <div class="overall-bar-track"><div class="overall-bar-fill" id="bkOverallFill"></div></div>
+          <span class="elapsed-lbl" id="bkElapsedLbl">0:00 elapsed</span>
+        </div>
+      </div>
+
+      <!-- PIPELINE — 10 AGENTS (single phase) -->
+      <div class="phase-section" id="bkSec">
+        <div class="phase-header" onclick="toggleBkPhase()">
+          <div class="phase-meta">
+            <div class="phase-eyebrow">Pipeline &mdash; 10 Agents</div>
+            <div class="phase-name">Pull &middot; Classify &middot; Deposit &middot; Reconcile</div>
+            <div class="phase-working hidden" id="bkWorking"></div>
+          </div>
+          <div class="phase-right">
+            <div class="phase-badge pb-idle" id="bkBadge">Idle</div>
+            <span class="phase-chevron up" id="bkChev">&#9660;</span>
+          </div>
+        </div>
+        <div class="phase-prog-track"><div class="phase-prog-fill" id="bkProgFill"></div></div>
+        <div class="phase-body collapsed" id="bkBody">
+          <div class="phase-agents" id="bkAgentList"></div>
+        </div>
+      </div>
+
+      <!-- SCHEDULE (display only) -->
+      <div class="icard">
+        <div class="stitle">Schedule</div>
+        <div class="sched-saved-wrap vis">
+          <div class="sched-saved-text">Runs automatically every day at 6:00am. RRP agents activate in Phase 2.</div>
+        </div>
+      </div>
+
+      <!-- RECENT RUNS -->
+      <div class="icard">
+        <div class="stitle">Recent Runs</div>
+        <div id="bkRunLog"><div style="font-size:13px;color:var(--iron);opacity:.4;padding:8px 0">No runs yet. Hit Run Pipeline to get started.</div></div>
+      </div>
+
+    </div>
+
+    <!-- AGENTS TAB -->
+    <div class="tab-pane" id="t-bk-agents">
+      <div class="icard">
+        <div class="stitle">All 10 Agents</div>
+        <div id="bkAgentsStatic"></div>
       </div>
     </div>
 
@@ -1076,7 +1191,7 @@ async function loadStats(){
     document.getElementById('cLast').textContent=parts[0]||'—';
   }
 }
-async function loadPersistedData(){await Promise.all([loadSchedule(),loadStats(),loadRuns()]);}
+async function loadPersistedData(){await Promise.all([loadSchedule(),loadStats(),loadRuns(),loadBkRuns()]);}
 
 // ─────────────────────────────────────────
 // PANEL / TABS
@@ -1136,9 +1251,253 @@ async function bootApp(email){
   document.getElementById('userPill').style.display='flex';
   document.getElementById('logoutBtn').style.display='block';
   initAgentLists();
+  initBkLists();
   bootStatusCheck();
+  bkBootStatusCheck();
   await fbReady;
   loadPersistedData().catch(e=>console.warn('loadPersistedData:',e));
+}
+
+// ═════════════════════════════════════════
+// SCC BOOKKEEPER — fully independent of the blog pipeline above.
+// Own DOM IDs (bk*), own state vars, own poller. Talks to the same
+// bridge server via /run-bookkeeper, /bookkeeper-status, /stop-bookkeeper.
+// ═════════════════════════════════════════
+const BK_AGENTS = [
+  {num:'01',name:'SCC Stripe Data Puller',  desc:'Pulls charge-level transaction detail from Stripe API, classifies by product and bundle type.',           model:'Sonnet',stub:false},
+  {num:'02',name:'SCC PayPal Data Puller',  desc:'Pulls transaction detail from PayPal Transactions API, applies classification and bundle detection.',      model:'Sonnet',stub:false},
+  {num:'03',name:'SCC Kajabi Data Puller',  desc:'Pulls purchase data from Kajabi API, groups by payout window, classifies by offer title.',                 model:'Haiku', stub:false},
+  {num:'04',name:'RRP Stripe Data Puller',  desc:'STUB — RRP Phase 2. Skips and passes through.',                                                            model:'Haiku', stub:true},
+  {num:'05',name:'RRP PayPal Data Puller',  desc:'STUB — RRP Phase 2. Skips and passes through.',                                                            model:'Haiku', stub:true},
+  {num:'06',name:'RRP Kajabi Data Puller',  desc:'STUB — RRP Phase 2. Skips and passes through.',                                                            model:'Haiku', stub:true},
+  {num:'07',name:'SCC QBO Split Agent',     desc:'Creates itemized split deposit records in QuickBooks Online via API for all three SCC sources.',           model:'Sonnet',stub:false},
+  {num:'08',name:'RRP QBO Split Agent',     desc:'STUB — RRP Phase 2. Skips and passes through.',                                                            model:'Haiku', stub:true},
+  {num:'09',name:'Reconciliation Auditor',  desc:'Verifies all deposits, calculates totals by product, flags anything needing manual review.',               model:'Haiku', stub:false},
+  {num:'10',name:'Bookkeeper Handoff',      desc:'Updates run log, writes last-run date, delivers completion summary.',                                      model:'Haiku', stub:false},
+];
+
+let bkRunning=false, bkTimer=null, bkPoller=null, bkAgentIdx=0, bkSec=0;
+let bkRunLog=[], bkServerConnected=false;
+
+// ── RENDER AGENTS ──
+function renderBookkeeperAgents(activeIdx){ // activeIdx 1-based; 0=all idle, >10=all done
+  const el=document.getElementById('bkAgentList');
+  if(!el)return;
+  el.innerHTML=BK_AGENTS.map((a,i)=>{
+    const n=i+1; let sc,sl,op;
+    if(activeIdx===0){sc='as-idle';sl='Idle';op=a.stub?'.45':'1';}
+    else if(n<activeIdx){sc='as-done';sl='Done ✓';op=a.stub?'.45':'.65';}
+    else if(n===activeIdx){sc='as-running';sl='Running';op='1';}
+    else{sc='as-idle';sl='Idle';op=a.stub?'.45':'.5';}
+    return `<div class="agent-row" style="opacity:${op}">
+      <div class="agent-num">${a.num}</div>
+      <div class="agent-info">
+        <div class="agent-name">${a.name}</div>
+        <div class="agent-desc">${a.desc}</div>
+        <div class="agent-model">${a.model}</div>
+      </div>
+      <div class="agent-status ${sc}">${sl}</div>
+    </div>`;
+  }).join('');
+}
+function renderBookkeeperStatic(){
+  const el=document.getElementById('bkAgentsStatic');
+  if(!el)return;
+  el.innerHTML=BK_AGENTS.map(a=>`<div class="agent-row" style="opacity:${a.stub?'.45':'1'}">
+    <div class="agent-num">${a.num}</div>
+    <div class="agent-info">
+      <div class="agent-name">${a.name}</div>
+      <div class="agent-desc">${a.desc}</div>
+      <div class="agent-model">${a.model}</div>
+    </div>
+  </div>`).join('');
+}
+function initBkLists(){renderBookkeeperAgents(0);renderBookkeeperStatic();}
+
+// ── PHASE UI ──
+function setBkPhase(status){
+  const badge=document.getElementById('bkBadge');
+  const fill=document.getElementById('bkProgFill');
+  const sec=document.getElementById('bkSec');
+  const working=document.getElementById('bkWorking');
+  if(status==='idle'){
+    badge.textContent='Idle';badge.className='phase-badge pb-idle';
+    sec.classList.remove('phase-active','phase-done');
+    fill.style.width='0%';fill.classList.remove('done');
+    working.textContent='';working.classList.add('hidden');
+  } else if(status==='running'){
+    badge.textContent='Running';badge.className='phase-badge pb-running';
+    sec.classList.add('phase-active');sec.classList.remove('phase-done');
+  } else if(status==='done'){
+    badge.textContent='Done ✓';badge.className='phase-badge pb-done';
+    sec.classList.remove('phase-active');sec.classList.add('phase-done');
+    fill.style.width='100%';fill.classList.add('done');
+    working.textContent='';working.classList.add('hidden');
+  }
+}
+function setBkAgent(agentNum){
+  const fill=document.getElementById('bkProgFill');
+  fill.style.width=Math.round(((agentNum-1)/BK_AGENTS.length)*100)+'%';
+  renderBookkeeperAgents(agentNum);
+  updateBkBar();
+}
+function updateBkBar(){
+  document.getElementById('bkOverallFill').style.width=Math.min(100,Math.round((bkAgentIdx/BK_AGENTS.length)*100))+'%';
+}
+function toggleBkPhase(){
+  const body=document.getElementById('bkBody');
+  const chev=document.getElementById('bkChev');
+  const collapsed=body.classList.toggle('collapsed');
+  chev.classList.toggle('up',collapsed);
+}
+
+// ── PANEL / TABS ──
+function openBookkeeperPanel(){document.getElementById('bkPanel').classList.add('open');document.getElementById('bkOverlay').classList.add('open');document.body.style.overflow='hidden';}
+function closeBookkeeperPanel(){document.getElementById('bkPanel').classList.remove('open');document.getElementById('bkOverlay').classList.remove('open');document.body.style.overflow='';}
+function swBkTab(e,n){
+  const panel=document.getElementById('bkPanel');
+  panel.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  panel.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById('t-bk-'+n).classList.add('active');
+}
+
+// ── STATUS POLLER (live from server) ──
+function startBkPoller(){
+  stopBkPoller();
+  bkPoller=setInterval(async()=>{
+    const s=await callServer('/bookkeeper-status','GET');
+    if(!s)return;
+    bkServerConnected=true;
+    if(s.running && s.currentAgent){
+      bkAgentIdx=s.currentAgent;
+      setBkPhase('running');
+      setBkAgent(s.currentAgent);
+      const a=BK_AGENTS[s.currentAgent-1];
+      const w=document.getElementById('bkWorking');
+      if(a){w.textContent='Working on: '+(s.currentAgentName||a.name);w.classList.remove('hidden');}
+    }
+    if(s.elapsed)document.getElementById('bkElapsedLbl').textContent=s.elapsed+' elapsed';
+    if(s.done){stopBkPoller();finishBookkeeper(s);}
+  },2000);
+}
+function stopBkPoller(){if(bkPoller){clearInterval(bkPoller);bkPoller=null;}}
+
+// ── RUN / STOP ──
+async function runBookkeeperPipeline(){
+  if(bkRunning)return;
+  document.getElementById('bkCompBanner').classList.remove('vis');
+  setBkPhase('idle'); renderBookkeeperAgents(0);
+
+  bkRunning=true; bkAgentIdx=0; bkServerConnected=false;
+  document.getElementById('btnBkRun').disabled=true;
+  document.getElementById('btnBkStop').style.display='inline-flex';
+  document.getElementById('bkOverallBarWrap').style.display='block';
+  document.getElementById('bkOverallFill').style.background='var(--pink)';
+  document.getElementById('bkOverallFill').style.width='0%';
+  document.getElementById('gDot').className='sdot running';
+  document.getElementById('gStatus').textContent='Bookkeeper running…';
+  document.getElementById('bkCBadge').textContent='Running';
+  document.getElementById('bkCBadge').className='cbadge b-running';
+
+  bkSec=0; clearInterval(bkTimer);
+  bkTimer=setInterval(()=>{bkSec++;const m=Math.floor(bkSec/60),s=bkSec%60;document.getElementById('bkElapsedLbl').textContent=m+':'+String(s).padStart(2,'0')+' elapsed';},1000);
+
+  // Bookkeeper touches real money/QBO — no simulation fallback. Needs the bridge server.
+  const live=await callServer('/bookkeeper-status','GET');
+  if(live!==null){
+    const res=await callServer('/run-bookkeeper','POST',{});
+    if(!res||res.error)toast('⚠ Server reachable but bookkeeper command failed');
+    startBkPoller();
+  } else {
+    toast('Local server offline — bookkeeper needs the bridge server');
+    stopBookkeeperPipeline();
+  }
+}
+
+function stopBookkeeperPipeline(){
+  stopBkPoller(); clearInterval(bkTimer);
+  bkRunning=false; bkServerConnected=false;
+  try{callServer('/stop-bookkeeper','POST');}catch{}
+  document.getElementById('btnBkRun').disabled=false;
+  document.getElementById('btnBkStop').style.display='none';
+  document.getElementById('bkOverallBarWrap').style.display='none';
+  document.getElementById('gDot').className='sdot';
+  document.getElementById('gStatus').textContent='All systems idle';
+  document.getElementById('bkCBadge').textContent='Idle';
+  document.getElementById('bkCBadge').className='cbadge b-idle';
+  setBkPhase('idle'); renderBookkeeperAgents(0);
+  toast('Bookkeeper stopped');
+}
+
+function finishBookkeeper(summary){
+  if(!bkRunning)return;
+  bkRunning=false;
+  stopBkPoller(); clearInterval(bkTimer);
+
+  document.getElementById('bkOverallFill').style.width='100%';
+  document.getElementById('bkOverallFill').style.background='var(--green)';
+  setBkPhase('done'); renderBookkeeperAgents(BK_AGENTS.length+1);
+  document.getElementById('btnBkRun').disabled=false;
+  document.getElementById('btnBkStop').style.display='none';
+  document.getElementById('gDot').className='sdot done';
+  document.getElementById('gStatus').textContent='Bookkeeper run complete';
+  document.getElementById('bkCBadge').textContent='Done ✓';
+  document.getElementById('bkCBadge').className='cbadge b-done';
+  document.getElementById('bkCompBanner').classList.add('vis');
+
+  const now=new Date();
+  const ds=now.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('bkCLast').textContent='Today';
+  bkRunLog.unshift({date:ds});
+  if(bkRunLog.length>20)bkRunLog.pop();
+  renderBkRunLog();
+  fbSet('bkRuns',bkRunLog);
+  toast('Bookkeeper run complete — deposits in QuickBooks');
+
+  setTimeout(()=>{
+    document.getElementById('gDot').className='sdot';
+    document.getElementById('gStatus').textContent='All systems idle';
+    document.getElementById('bkCBadge').textContent='Idle';
+    document.getElementById('bkCBadge').className='cbadge b-idle';
+    document.getElementById('bkOverallBarWrap').style.display='none';
+  },14000);
+}
+
+// ── RUN LOG ──
+function renderBkRunLog(){
+  const el=document.getElementById('bkRunLog');
+  if(!bkRunLog.length){el.innerHTML='<div style="font-size:13px;color:var(--iron);opacity:.4;padding:8px 0">No runs yet. Hit Run Pipeline to get started.</div>';return;}
+  el.innerHTML=bkRunLog.map(r=>`<div class="run-entry">
+    <div class="rdot ok"></div>
+    <div class="rinfo">
+      <div class="rtitle">Split deposits created in QuickBooks Online</div>
+      <div class="rmeta">${r.date}</div>
+    </div>
+    <a class="rlink" href="https://app.qbo.intuit.com/app/banking" target="_blank" rel="noopener">Open QBO</a>
+  </div>`).join('');
+}
+async function loadBkRuns(){
+  const r=await fbGet('bkRuns');
+  if(!r||!r.length)return;
+  bkRunLog=r; renderBkRunLog();
+  document.getElementById('bkCLast').textContent=(bkRunLog[0].date||'').split(' at ')[0]||'—';
+}
+
+// ── BOOT STATUS CHECK (resume if a bookkeeper run is already in progress) ──
+async function bkBootStatusCheck(){
+  const s=await callServer('/bookkeeper-status','GET');
+  if(!s||!s.running)return;
+  bkRunning=true; bkServerConnected=true;
+  document.getElementById('bkCBadge').textContent='Running';
+  document.getElementById('bkCBadge').className='cbadge b-running';
+  document.getElementById('bkOverallBarWrap').style.display='block';
+  document.getElementById('btnBkRun').disabled=true;
+  document.getElementById('btnBkStop').style.display='inline-flex';
+  if(s.currentAgent){bkAgentIdx=s.currentAgent;setBkPhase('running');setBkAgent(s.currentAgent);}
+  startBkPoller();
+  bkSec=0; clearInterval(bkTimer);
+  bkTimer=setInterval(()=>{bkSec++;const m=Math.floor(bkSec/60),sv=bkSec%60;document.getElementById('bkElapsedLbl').textContent=m+':'+String(sv).padStart(2,'0')+' elapsed';},1000);
 }
 
 // Wire events
@@ -1163,6 +1522,13 @@ window.bsWrite     = bsWrite;
 window.bsQueue     = bsQueue;
 window.refreshCal  = refreshCal;
 window.toast       = toast;
+// Bookkeeper
+window.openBookkeeperPanel  = openBookkeeperPanel;
+window.closeBookkeeperPanel = closeBookkeeperPanel;
+window.swBkTab              = swBkTab;
+window.toggleBkPhase        = toggleBkPhase;
+window.runBookkeeperPipeline  = runBookkeeperPipeline;
+window.stopBookkeeperPipeline = stopBookkeeperPipeline;
 
 // Auto-boot if email saved
 const savedEmail=getSavedEmail();
