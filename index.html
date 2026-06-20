@@ -621,7 +621,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
     </div>
     <div class="tab-bar">
       <button class="tab-btn active" onclick="swBkTab(event,'run')">Run Pipeline</button>
-      <button class="tab-btn" onclick="swBkTab(event,'agents')">Agents</button>
+      <button class="tab-btn" onclick="swBkTab(event,'log')">Run Log</button>
     </div>
   </div>
 
@@ -657,11 +657,11 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
           </div>
           <div class="phase-right">
             <div class="phase-badge pb-idle" id="bkBadge">Idle</div>
-            <span class="phase-chevron up" id="bkChev">&#9660;</span>
+            <span class="phase-chevron" id="bkChev">&#9660;</span>
           </div>
         </div>
         <div class="phase-prog-track"><div class="phase-prog-fill" id="bkProgFill"></div></div>
-        <div class="phase-body collapsed" id="bkBody">
+        <div class="phase-body" id="bkBody">
           <div class="phase-agents" id="bkAgentList"></div>
         </div>
       </div>
@@ -674,19 +674,14 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
         </div>
       </div>
 
-      <!-- RECENT RUNS -->
-      <div class="icard">
-        <div class="stitle">Recent Runs</div>
-        <div id="bkRunLog"><div style="font-size:13px;color:var(--iron);opacity:.4;padding:8px 0">No runs yet. Hit Run Pipeline to get started.</div></div>
-      </div>
-
     </div>
 
-    <!-- AGENTS TAB -->
-    <div class="tab-pane" id="t-bk-agents">
+    <!-- RUN LOG TAB -->
+    <div class="tab-pane" id="t-bk-log">
       <div class="icard">
-        <div class="stitle">All 6 Agents</div>
-        <div id="bkAgentsStatic"></div>
+        <div class="stitle">Run Log</div>
+        <p style="font-size:13px;color:var(--iron);opacity:.6;line-height:1.75;margin-bottom:20px">Every run is recorded here, and also written to <code style="font-size:12px;background:var(--bg);padding:2px 6px;">data/run-log.json</code> and the Notion SCC Session Log by the handoff agent.</p>
+        <div id="bkRunLog"><div style="font-size:13px;color:var(--iron);opacity:.4;padding:8px 0">No runs yet. Hit Run Pipeline to get started.</div></div>
       </div>
     </div>
 
@@ -1296,19 +1291,7 @@ function renderBookkeeperAgents(activeIdx){ // activeIdx 1-based; 0=all idle, >1
     </div>`;
   }).join('');
 }
-function renderBookkeeperStatic(){
-  const el=document.getElementById('bkAgentsStatic');
-  if(!el)return;
-  el.innerHTML=BK_AGENTS.map(a=>`<div class="agent-row" style="opacity:${a.stub?'.45':'1'}">
-    <div class="agent-num">${a.num}</div>
-    <div class="agent-info">
-      <div class="agent-name">${a.name}</div>
-      <div class="agent-desc">${a.desc}</div>
-      <div class="agent-model">${a.model}</div>
-    </div>
-  </div>`).join('');
-}
-function initBkLists(){renderBookkeeperAgents(0);renderBookkeeperStatic();}
+function initBkLists(){renderBookkeeperAgents(0);}
 
 // ── PHASE UI ──
 function setBkPhase(status){
@@ -1426,10 +1409,11 @@ function stopBookkeeperPipeline(){
   toast('Bookkeeper stopped');
 }
 
-function finishBookkeeper(summary){
+function finishBookkeeper(status){
   if(!bkRunning)return;
   bkRunning=false;
   stopBkPoller(); clearInterval(bkTimer);
+  const sm=(status&&status.summary)?status.summary:null;
 
   document.getElementById('bkOverallFill').style.width='100%';
   document.getElementById('bkOverallFill').style.background='var(--green)';
@@ -1440,16 +1424,20 @@ function finishBookkeeper(summary){
   document.getElementById('gStatus').textContent='Bookkeeper run complete';
   document.getElementById('bkCBadge').textContent='Done ✓';
   document.getElementById('bkCBadge').className='cbadge b-done';
+  const bannerMsg = (sm&&sm.posted!=null)
+    ? `${sm.posted} split deposit${sm.posted===1?'':'s'} posted to QuickBooks${sm.review?` · ⚠ ${sm.review} need review`:''}.`
+    : 'Split deposits created in QuickBooks Online.';
+  document.getElementById('bkCompText').textContent=bannerMsg;
   document.getElementById('bkCompBanner').classList.add('vis');
 
   const now=new Date();
   const ds=now.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
   document.getElementById('bkCLast').textContent='Today';
-  bkRunLog.unshift({date:ds});
+  bkRunLog.unshift({date:ds, posted: sm?sm.posted:null, net: sm?sm.net:null, review: sm?sm.review:null});
   if(bkRunLog.length>20)bkRunLog.pop();
   renderBkRunLog();
   fbSet('bkRuns',bkRunLog);
-  toast('Bookkeeper run complete — deposits in QuickBooks');
+  toast(bannerMsg);
 
   setTimeout(()=>{
     document.getElementById('gDot').className='sdot';
@@ -1464,14 +1452,24 @@ function finishBookkeeper(summary){
 function renderBkRunLog(){
   const el=document.getElementById('bkRunLog');
   if(!bkRunLog.length){el.innerHTML='<div style="font-size:13px;color:var(--iron);opacity:.4;padding:8px 0">No runs yet. Hit Run Pipeline to get started.</div>';return;}
-  el.innerHTML=bkRunLog.map(r=>`<div class="run-entry">
+  el.innerHTML=bkRunLog.map(r=>{
+    const title = (r.posted!=null)
+      ? `${r.posted} split deposit${r.posted===1?'':'s'} posted to QuickBooks`
+      : 'Split deposits posted to QuickBooks';
+    const net = (r.net!=null)
+      ? ` &middot; $${Number(r.net).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} net`
+      : '';
+    const review = (r.review)
+      ? `<span style="color:var(--amber)"> &middot; &#9888; ${r.review} need review</span>`
+      : '';
+    return `<div class="run-entry">
     <div class="rdot ok"></div>
     <div class="rinfo">
-      <div class="rtitle">Split deposits created in QuickBooks Online</div>
-      <div class="rmeta">${r.date}</div>
+      <div class="rtitle">${title}${net}${review}</div>
+      <div class="rmeta">${r.date} &middot; logged to run-log.json + Notion Session Log</div>
     </div>
     <a class="rlink" href="https://app.qbo.intuit.com/app/banking" target="_blank" rel="noopener">Open QBO</a>
-  </div>`).join('');
+  </div>`;}).join('');
 }
 async function loadBkRuns(){
   const r=await fbGet('bkRuns');
