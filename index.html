@@ -318,7 +318,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
     </div>
     <div class="stat-card">
       <div class="stat-label">Total Agents</div>
-      <div class="stat-value">25</div>
+      <div class="stat-value">21</div>
       <div class="stat-detail">across 2 teams</div>
     </div>
     <div class="stat-card">
@@ -358,7 +358,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
       </div>
       <div class="card-desc">Pulls transaction data from Stripe, PayPal, and Kajabi, classifies by product, and enters itemized split deposits directly into QuickBooks Online via API. Runs daily at 6am. RRP agents activate in Phase 2.</div>
       <div class="card-meta">
-        <div><div class="ml">Agents</div><div class="mv">10</div></div>
+        <div><div class="ml">Agents</div><div class="mv">6</div></div>
         <div><div class="ml">Schedule</div><div class="mv">Daily 6am</div></div>
         <div><div class="ml">Last run</div><div class="mv" id="bkCLast">—</div></div>
       </div>
@@ -614,7 +614,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
   <div class="panel-head">
     <div class="panel-head-top">
       <div>
-        <div class="panel-ey">Bookkeeper &middot; 10 Agents &middot; QBO API</div>
+        <div class="panel-ey">Bookkeeper &middot; 6 Agents &middot; QBO API</div>
         <div class="panel-title">SCC Bookkeeper</div>
       </div>
       <button class="close-btn" onclick="closeBookkeeperPanel()">&#x2715;</button>
@@ -647,12 +647,12 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
         </div>
       </div>
 
-      <!-- PIPELINE — 10 AGENTS (single phase) -->
+      <!-- PIPELINE — 6 AGENTS (single phase) -->
       <div class="phase-section" id="bkSec">
         <div class="phase-header" onclick="toggleBkPhase()">
           <div class="phase-meta">
-            <div class="phase-eyebrow">Pipeline &mdash; 10 Agents</div>
-            <div class="phase-name">Pull &middot; Classify &middot; Deposit &middot; Reconcile</div>
+            <div class="phase-eyebrow">Pipeline &mdash; 6 Agents</div>
+            <div class="phase-name">Deposit &middot; Reconcile &middot; Hand Off</div>
             <div class="phase-working hidden" id="bkWorking"></div>
           </div>
           <div class="phase-right">
@@ -685,7 +685,7 @@ body{background:var(--bg);font-family:'Poppins',sans-serif;color:var(--iron);lin
     <!-- AGENTS TAB -->
     <div class="tab-pane" id="t-bk-agents">
       <div class="icard">
-        <div class="stitle">All 10 Agents</div>
+        <div class="stitle">All 6 Agents</div>
         <div id="bkAgentsStatic"></div>
       </div>
     </div>
@@ -1264,16 +1264,12 @@ async function bootApp(email){
 // bridge server via /run-bookkeeper, /bookkeeper-status, /stop-bookkeeper.
 // ═════════════════════════════════════════
 const BK_AGENTS = [
-  {num:'01',name:'SCC Stripe Data Puller',  desc:'Pulls charge-level transaction detail from Stripe API, classifies by product and bundle type.',           model:'Sonnet',stub:false},
-  {num:'02',name:'SCC PayPal Data Puller',  desc:'Pulls transaction detail from PayPal Transactions API, applies classification and bundle detection.',      model:'Sonnet',stub:false},
-  {num:'03',name:'SCC Kajabi Data Puller',  desc:'Pulls purchase data from Kajabi API, groups by payout window, classifies by offer title.',                 model:'Haiku', stub:false},
-  {num:'04',name:'RRP Stripe Data Puller',  desc:'STUB — RRP Phase 2. Skips and passes through.',                                                            model:'Haiku', stub:true},
-  {num:'05',name:'RRP PayPal Data Puller',  desc:'STUB — RRP Phase 2. Skips and passes through.',                                                            model:'Haiku', stub:true},
-  {num:'06',name:'RRP Kajabi Data Puller',  desc:'STUB — RRP Phase 2. Skips and passes through.',                                                            model:'Haiku', stub:true},
-  {num:'07',name:'SCC QBO Split Agent',     desc:'Creates itemized split deposit records in QuickBooks Online via API for all three SCC sources.',           model:'Sonnet',stub:false},
-  {num:'08',name:'RRP QBO Split Agent',     desc:'STUB — RRP Phase 2. Skips and passes through.',                                                            model:'Haiku', stub:true},
-  {num:'09',name:'Reconciliation Auditor',  desc:'Verifies all deposits, calculates totals by product, flags anything needing manual review.',               model:'Haiku', stub:false},
-  {num:'10',name:'Bookkeeper Handoff',      desc:'Updates run log, writes last-run date, delivers completion summary.',                                      model:'Haiku', stub:false},
+  {num:'01',name:'SCC Stripe Deposits',    desc:'Posts SCC Stripe payouts to QBO as itemized split deposits — pull, dedup by date+amount, penny-exact reconcile, CREATE-only.',          model:'Sonnet',stub:false},
+  {num:'02',name:'SCC PayPal Deposits',    desc:'Posts SCC PayPal settlements to QBO via the hold-aware window engine (21-day lead-in) — reconcile-or-skip, CREATE-only.',             model:'Sonnet',stub:false},
+  {num:'03',name:'SCC Kajabi Deposits',    desc:'Posts SCC Kajabi payouts to QBO, API only — reconstructs each payout by subset-sum, builds penny-exact splits, CREATE-only.',          model:'Sonnet',stub:false},
+  {num:'04',name:'Reconciliation Auditor', desc:'Aggregates all three run-logs, computes per-source and overall totals, appends to run-log.json, flags review items.',                model:'Haiku', stub:false},
+  {num:'05',name:'Bookkeeper Handoff',     desc:'Advances last-run.json (SCC only), writes the completion summary, and notifies the Notion SCC Session Log.',                       model:'Haiku', stub:false},
+  {num:'06',name:'RRP Deposits',           desc:'STUB — RRP Phase 2. Logs a skip and writes a stub result. Splits into per-source Stripe/PayPal/Kajabi agents in Phase 2.',         model:'Haiku', stub:true},
 ];
 
 let bkRunning=false, bkTimer=null, bkPoller=null, bkAgentIdx=0, bkSec=0;
